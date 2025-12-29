@@ -8,6 +8,8 @@ on:
 jobs:
   bench:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: astral-sh/setup-uv@v5
 
@@ -23,15 +25,33 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Benchmark --help
+        id: bench
         run: |
           start=$(date +%s%N)
           .venv/bin/transformers-cli --help > /dev/null
           end=$(date +%s%N)
           ms=$(( (end - start) / 1000000 ))
-          echo "transformers --help: ${ms}ms @ ${{ steps.version.outputs.version }}"
-          if [ $ms -lt 200 ]; then
-            echo "PASS"
+          echo "time_ms=$ms" >> $GITHUB_OUTPUT
+          echo "transformers-cli --help: ${ms}ms"
+
+      - uses: actions/checkout@v4
+
+      - name: Update index.html
+        env:
+          TIME_MS: ${{ steps.bench.outputs.time_ms }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # upsert transformers row
+          if grep -q 'id="transformers"' index.html; then
+            sed -i 's|<tr id="transformers">.*</tr>|<tr id="transformers"><td>transformers</td><td class="slow">'"${TIME_MS}"'ms</td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td>-</td></tr>|' index.html
           else
-            echo "FAIL: ${ms}ms > 200ms"
-            exit 1
+            sed -i '/<\/table>/i\    <tr id="transformers"><td>transformers</td><td class="slow">'"${TIME_MS}"'ms</td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td>-</td></tr>' index.html
           fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --staged --quiet || git commit -m "transformers: ${TIME_MS}ms @ ${VERSION}"
+          git push
