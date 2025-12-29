@@ -34,8 +34,8 @@ jobs:
           cd vllm_source
           uv venv
           uv pip install cmake wheel packaging ninja "setuptools-scm>=8" numpy
-          uv pip install -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
-          VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation
+          uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu
+          VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Get vllm version
         id: version
