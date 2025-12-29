@@ -42,12 +42,12 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          # upsert transformers row
-          if grep -q 'id="transformers"' index.html; then
-            sed -i 's|<tr id="transformers">.*</tr>|<tr id="transformers"><td>transformers</td><td class="slow"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>transformers-cli --help</code></td><td>-</td></tr>|' index.html
+          if [ "$TIME_MS" -lt 200 ]; then
+            CLASS="ok"
           else
-            sed -i '/<\/table>/i\    <tr id="transformers"><td>transformers</td><td class="slow"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>transformers-cli --help</code></td><td>-</td></tr>' index.html
+            CLASS="slow"
           fi
+          sed -i 's|<tr id="transformers">.*</tr>|<tr id="transformers"><td>transformers</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>pip install transformers</code></td><td><code>transformers-cli --help</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
         run: |

@@ -44,11 +44,7 @@ jobs:
             CLASS="slow"
           fi
           # upsert ollama row
-          if grep -q 'id="ollama"' index.html; then
-            sed -i 's|<tr id="ollama">.*</tr>|<tr id="ollama"><td>ollama</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/ollama/ollama/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>ollama --help</code></td><td>-</td></tr>|' index.html
-          else
-            sed -i '/<\/table>/i\    <tr id="ollama"><td>ollama</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/ollama/ollama/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>ollama --help</code></td><td>-</td></tr>' index.html
-          fi
+          sed -i 's|<tr id="ollama">.*</tr>|<tr id="ollama"><td>ollama</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/ollama/ollama/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>curl -fsSL https://ollama.com/install.sh \| sh</code></td><td><code>ollama --help</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
         run: |
