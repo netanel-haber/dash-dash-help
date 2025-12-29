@@ -28,7 +28,7 @@ jobs:
           cd vllm_source
           uv venv
           VLLM_USE_PRECOMPILED=1 VLLM_PRECOMPILED_WHEEL_VARIANT=cpu VLLM_TARGET_DEVICE=cpu \
-            uv pip install . --extra-index-url https://download.pytorch.org/whl/cpu
+            uv pip install . --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Get vllm version
         id: version
