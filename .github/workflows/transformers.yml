@@ -21,7 +21,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(.venv/bin/pip show transformers | grep Version | cut -d' ' -f2)
+          VERSION=$(uv pip show transformers | grep Version | cut -d' ' -f2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Benchmark --help
