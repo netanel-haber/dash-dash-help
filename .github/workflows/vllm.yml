@@ -25,6 +25,8 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Benchmark --help
+        env:
+          VLLM_TARGET_DEVICE: cpu
         run: |
           start=$(date +%s%N)
           .venv/bin/vllm --help > /dev/null
