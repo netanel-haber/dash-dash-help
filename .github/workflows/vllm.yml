@@ -17,7 +17,10 @@ jobs:
       - name: Install vllm @ ${{ env.VLLM_COMMIT }}
         run: |
           uv venv
-          uv pip install vllm --extra-index-url https://wheels.vllm.ai/${{ env.VLLM_COMMIT }}/cpu
+          uv pip install vllm \
+            --prerelease=allow \
+            --extra-index-url https://wheels.vllm.ai/${{ env.VLLM_COMMIT }}/cpu \
+            --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Benchmark --help
         run: |
