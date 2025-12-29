@@ -23,19 +23,21 @@ jobs:
       - name: Get vllm version
         id: version
         run: |
-          VERSION=$(.venv/bin/pip show vllm | grep Version | cut -d' ' -f2)
+          VERSION=$(uv pip show vllm | grep Version | cut -d' ' -f2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Benchmark --help
         id: bench
+        continue-on-error: true
         env:
           VLLM_TARGET_DEVICE: cpu
         run: |
           start=$(date +%s%N)
-          .venv/bin/vllm --help > /dev/null
+          .venv/bin/vllm --help > /dev/null 2>&1
           end=$(date +%s%N)
           ms=$(( (end - start) / 1000000 ))
           echo "time_ms=$ms" >> $GITHUB_OUTPUT
+          echo "success=true" >> $GITHUB_OUTPUT
           echo "vllm --help: ${ms}ms"
 
       - uses: actions/checkout@v4
@@ -43,20 +45,36 @@ jobs:
       - name: Update index.html
         env:
           TIME_MS: ${{ steps.bench.outputs.time_ms }}
+          SUCCESS: ${{ steps.bench.outputs.success }}
           VERSION: ${{ steps.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$TIME_MS" -lt 200 ]; then
-            CLASS="ok"
+          if [ "$SUCCESS" = "true" ]; then
+            if [ "$TIME_MS" -lt 200 ]; then
+              CLASS="ok"
+            else
+              CLASS="slow"
+            fi
+            TIME_DISPLAY="${TIME_MS}ms"
           else
             CLASS="slow"
+            TIME_DISPLAY="crash"
           fi
-          sed -i 's|<tr id="vllm">.*</tr>|<tr id="vllm"><td>vllm</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/vllm-project/vllm/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>vllm --help</code></td><td>-</td></tr>|' index.html
+          sed -i 's|<tr id="vllm">.*</tr>|<tr id="vllm"><td>vllm</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_DISPLAY}"'</a></td><td><a href="https://github.com/vllm-project/vllm/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>vllm --help</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
+        env:
+          TIME_MS: ${{ steps.bench.outputs.time_ms }}
+          SUCCESS: ${{ steps.bench.outputs.success }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --staged --quiet || git commit -m "vllm: ${TIME_MS}ms @ ${VERSION}"
+          if [ "$SUCCESS" = "true" ]; then
+            MSG="vllm: ${TIME_MS}ms @ ${VERSION}"
+          else
+            MSG="vllm: crash @ ${VERSION}"
+          fi
+          git diff --staged --quiet || git commit -m "$MSG"
           git push
