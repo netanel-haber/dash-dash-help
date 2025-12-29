@@ -19,6 +19,7 @@ jobs:
           uv venv
           uv pip install vllm \
             --prerelease=allow \
+            --index-strategy unsafe-best-match \
             --extra-index-url https://wheels.vllm.ai/${{ env.VLLM_COMMIT }}/cpu \
             --extra-index-url https://download.pytorch.org/whl/cpu
 
