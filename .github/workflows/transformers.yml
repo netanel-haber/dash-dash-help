@@ -44,9 +44,9 @@ jobs:
         run: |
           # upsert transformers row
           if grep -q 'id="transformers"' index.html; then
-            sed -i 's|<tr id="transformers">.*</tr>|<tr id="transformers"><td>transformers</td><td class="slow"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td>-</td></tr>|' index.html
+            sed -i 's|<tr id="transformers">.*</tr>|<tr id="transformers"><td>transformers</td><td class="slow"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>transformers-cli --help</code></td><td>-</td></tr>|' index.html
           else
-            sed -i '/<\/table>/i\    <tr id="transformers"><td>transformers</td><td class="slow"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td>-</td></tr>' index.html
+            sed -i '/<\/table>/i\    <tr id="transformers"><td>transformers</td><td class="slow"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>transformers-cli --help</code></td><td>-</td></tr>' index.html
           fi
 
       - name: Commit and push
