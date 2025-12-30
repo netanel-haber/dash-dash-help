@@ -47,7 +47,7 @@ jobs:
           else
             CLASS="slow"
           fi
-          sed -i 's|<tr id="transformers">.*</tr>|<tr id="transformers"><td>transformers</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>uv venv\nuv pip install transformers torch --extra-index-url https://download.pytorch.org/whl/cpu</code></td><td><code>transformers-cli --help</code></td><td>-</td></tr>|' index.html
+          sed -i 's|<tr id="transformers">.*</tr>|<tr id="transformers"><td>transformers</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><details><summary><code>uv pip install transformers torch</code></summary><code>uv venv\nuv pip install transformers torch --extra-index-url https://download.pytorch.org/whl/cpu</code></details></td><td><code>transformers-cli --help</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
         run: |
