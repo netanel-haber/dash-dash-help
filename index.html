@@ -16,6 +16,12 @@
     .header { display: flex; align-items: center; gap: 1em; }
     .gh-link { display: inline-flex; }
     .gh-link svg { width: 20px; height: 20px; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #e0e0e0; }
+      th, td { border-bottom-color: #444; }
+      .slow { color: #ff6b6b; }
+      .ok { color: #51cf66; }
+    }
   </style>
 </head>
 <body>
