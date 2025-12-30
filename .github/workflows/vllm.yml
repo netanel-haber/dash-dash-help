@@ -69,7 +69,7 @@ jobs:
           else
             CLASS="slow"
           fi
-          sed -i 's|<tr id="vllm">.*</tr>|<tr id="vllm"><td>vllm</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/vllm-project/vllm/releases/tag/'"${TAG}"'">'"${VERSION}"'</a></td><td><code>pip install vllm</code></td><td><code>vllm --help</code></td><td>-</td></tr>|' index.html
+          sed -i 's|<tr id="vllm">.*</tr>|<tr id="vllm"><td>vllm</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/vllm-project/vllm/releases/tag/'"${TAG}"'">'"${VERSION}"'</a></td><td><details><summary><code>build from source</code></summary><code>sudo apt-get update -y\nsudo apt-get install -y gcc-12 g++-12 libnuma-dev\nsudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10 --slave /usr/bin/g++ g++ /usr/bin/g++-12\ngit clone --depth 1 --branch '"${TAG}"' https://github.com/vllm-project/vllm.git\ncd vllm\nuv venv\nuv pip install cmake wheel packaging ninja \"setuptools-scm>=8\" numpy\nuv pip install -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu\nVLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url https://download.pytorch.org/whl/cpu</code></details></td><td><code>vllm --help</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
         env:
