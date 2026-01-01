@@ -16,7 +16,7 @@ jobs:
       - name: Install sglang
         run: |
           uv venv
-          uv pip install "sglang[all]" --extra-index-url https://download.pytorch.org/whl/cpu
+          uv pip install sglang --extra-index-url https://download.pytorch.org/whl/cpu
 
       - name: Get version
         id: version
@@ -47,7 +47,7 @@ jobs:
           else
             CLASS="slow"
           fi
-          sed -i 's|<tr id="sglang">.*</tr>|<tr id="sglang"><td>sglang</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/sgl-project/sglang/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>uv pip install \"sglang[all]\"</code></td><td><code>python -m sglang.launch_server --help</code></td><td>-</td></tr>|' index.html
+          sed -i 's|<tr id="sglang">.*</tr>|<tr id="sglang"><td>sglang</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/sgl-project/sglang/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>uv pip install sglang</code></td><td><code>python -m sglang.launch_server --help</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
         run: |
