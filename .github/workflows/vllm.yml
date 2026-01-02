@@ -18,13 +18,11 @@ jobs:
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
-          VLLM_TARGET_DEVICE: cpu
-          VLLM_USE_PRECOMPILED: "1"
         run: |
           TAG=$(gh api repos/vllm-project/vllm/releases/latest --jq '.tag_name')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           uv venv
-          uv pip install "vllm @ git+https://github.com/vllm-project/vllm.git@${TAG}" \
+          VLLM_TARGET_DEVICE=cpu VLLM_USE_PRECOMPILED=1 uv pip install "vllm @ git+https://github.com/vllm-project/vllm.git@${TAG}" \
             --index-strategy unsafe-best-match \
             --extra-index-url https://download.pytorch.org/whl/cpu
           echo "v=$(uv pip show vllm | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
