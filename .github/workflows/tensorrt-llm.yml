@@ -26,7 +26,7 @@ jobs:
 
       - name: Benchmark and update
         run: |
-          python3 scripts/bench.py ".venv/bin/trtllm-serve --help" \
+          python3 work.py bench ".venv/bin/trtllm-serve --help" \
             --id tensorrt-llm --library TensorRT-LLM \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v${{ steps.version.outputs.v }}" \

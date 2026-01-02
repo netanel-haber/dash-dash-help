@@ -31,7 +31,7 @@ jobs:
           cd VLMEvalKit
           uv venv
           uv pip install -e .</code></details>'
-          python3 scripts/bench.py "./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help" \
+          python3 work.py bench "./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help" \
             --id VLMEvalKit \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/v${{ steps.version.outputs.v }}" \

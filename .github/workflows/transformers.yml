@@ -27,7 +27,7 @@ jobs:
         run: |
           INSTALL='<details><summary><code>uv pip install transformers torch</code></summary><code>uv venv
           uv pip install transformers torch --extra-index-url https://download.pytorch.org/whl/cpu</code></details>'
-          python3 scripts/bench.py ".venv/bin/transformers-cli --help" \
+          python3 work.py bench ".venv/bin/transformers-cli --help" \
             --id transformers --library Transformers \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/huggingface/transformers/releases/tag/v${{ steps.version.outputs.v }}" \

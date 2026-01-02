@@ -25,7 +25,7 @@ jobs:
 
       - name: Benchmark and update
         run: |
-          python3 scripts/bench.py ".venv/bin/hf --help" \
+          python3 work.py bench ".venv/bin/hf --help" \
             --id hf --library "Hugging Face Hub" \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/huggingface/huggingface_hub/releases/tag/v${{ steps.version.outputs.v }}" \

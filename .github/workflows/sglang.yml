@@ -45,7 +45,7 @@ jobs:
         env:
           SGLANG_USE_CPU_ENGINE: "1"
         run: |
-          python3 scripts/bench.py ".venv/bin/python -m sglang.launch_server --help" \
+          python3 work.py bench ".venv/bin/python -m sglang.launch_server --help" \
             --id sglang --library SGLang \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/sgl-project/sglang/releases/tag/v${{ steps.version.outputs.v }}" \
