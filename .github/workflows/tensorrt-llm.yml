@@ -31,11 +31,11 @@ jobs:
         id: bench
         run: |
           start=$(date +%s%N)
-          .venv/bin/trtllm-bench --help > /dev/null 2>&1 || true
+          .venv/bin/trtllm-serve --help > /dev/null 2>&1 || true
           end=$(date +%s%N)
           ms=$(( (end - start) / 1000000 ))
           echo "time_ms=$ms" >> $GITHUB_OUTPUT
-          echo "trtllm-bench --help: ${ms}ms"
+          echo "trtllm-serve --help: ${ms}ms"
 
       - uses: actions/checkout@v4
 
@@ -50,7 +50,7 @@ jobs:
           else
             CLASS="slow"
           fi
-          sed -i 's|<tr id="tensorrt-llm">.*</tr>|<tr id="tensorrt-llm"><td>tensorrt-llm</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>uv pip install tensorrt-llm</code></td><td><code>trtllm-bench --help</code></td><td>-</td></tr>|' index.html
+          sed -i 's|<tr id="tensorrt-llm">.*</tr>|<tr id="tensorrt-llm"><td><code>trtllm-serve --help</code></td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>uv pip install tensorrt-llm</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
         env:
