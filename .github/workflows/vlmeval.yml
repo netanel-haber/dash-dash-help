@@ -42,12 +42,14 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$TIME_MS" -lt 200 ]; then
-            CLASS="ok"
-          else
-            CLASS="slow"
-          fi
-          sed -i 's|<tr id="vlmeval">.*</tr>|<tr id="vlmeval"><td><code>vlmutil --help</code></td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/open-compass/VLMEvalKit/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><code>uv pip install ms-vlmeval</code></td><td>-</td></tr>|' index.html
+          python3 scripts/update_row.py \
+            --id vlmeval \
+            --command "vlmutil --help" \
+            --time-ms "$TIME_MS" \
+            --version "$VERSION" \
+            --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/v${VERSION}" \
+            --run-url "$RUN_URL" \
+            --install '<code>uv pip install ms-vlmeval</code>'
 
       - name: Commit and push
         env:

@@ -71,12 +71,14 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$TIME_MS" -lt 200 ]; then
-            CLASS="ok"
-          else
-            CLASS="slow"
-          fi
-          sed -i 's|<tr id="sglang">.*</tr>|<tr id="sglang"><td><code>python -m sglang.launch_server --help</code></td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/sgl-project/sglang/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><a href="https://docs.sglang.io/platforms/cpu_server.html">CPU install</a></td><td>-</td></tr>|' index.html
+          python3 scripts/update_row.py \
+            --id sglang \
+            --command "python -m sglang.launch_server --help" \
+            --time-ms "$TIME_MS" \
+            --version "$VERSION" \
+            --version-url "https://github.com/sgl-project/sglang/releases/tag/v${VERSION}" \
+            --run-url "$RUN_URL" \
+            --install '<a href="https://docs.sglang.io/platforms/cpu_server.html">CPU install</a>'
 
       - name: Commit and push
         env:

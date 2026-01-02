@@ -14,11 +14,12 @@ Goal: Make `--help` < 200ms. Tagline: "Let's help help help devs"
 
 ## Table Structure
 ```
-tool | time | version | command | pr
+command | time | version | install | pr
 ```
+- command: the actual CLI command benchmarked (e.g., `ollama --help`) - this IS the identifier
 - time: links to GitHub Actions run, class="ok" if <200ms, class="slow" if >=200ms
 - version: links to `github.com/{org}/{repo}/releases/tag/v{version}`
-- command: the actual CLI command benchmarked (e.g., `ollama --help`)
+- install: how to install the tool
 - pr: for tracking fix PRs (future)
 
 ## Workflow Pattern
@@ -28,14 +29,39 @@ Each tool has its own `.github/workflows/{tool}.yml` that:
 3. Benchmarks `{tool} --help` using `date +%s%N` for nanosecond timing
 4. Checkouts repo
 5. Upserts row in index.html via sed (using `id="{tool}"` to find row)
-6. Commits with message `{tool}: {time}ms @ {version}`
+6. **IMPORTANT**: Must `git pull --rebase` before push to handle race conditions when multiple workflows run
+7. Commits with message `{tool}: {time}ms @ {version}`
 
 ## Tools Status
-- **ollama**: Working, ~13ms (Go binary, fast)
-- **transformers**: Working, ~8000ms (Python, slow)
-- **vllm**: Broken - requires GPU detection even for --help (document this failure)
-- **sglang**: TBD
-- **llama.cpp**: TBD
+- **ollama**: ~13ms (Go binary, fast) ✓
+- **llama.cpp**: ~29ms (C++ binary, fast) ✓
+- **lm-eval**: ~51ms (Python, fast!) ✓
+- **hf**: ~823ms (Python)
+- **tensorrt-llm**: ~704ms (trtllm-serve --help)
+- **transformers**: ~7500ms (Python, slow)
+- **sglang**: ~11000ms (Python, requires CPU build from source)
+- **vllm**: ~14000ms (Python, requires CPU build from source)
+- **vlmeval**: ~19000ms (Python, use `ms-vlmeval` package not `vlmeval`)
+
+## Package Name Gotchas
+- **vlmeval**: Package is `ms-vlmeval` on PyPI, CLI is `vlmutil`
+- **tensorrt-llm**: Use `trtllm-serve --help` not `trtllm --help`
+- **sglang**: Requires building from source for CPU, not available as simple pip install
+
+## sglang CPU Build Requirements
+Requires these apt packages for sgl-kernel build:
+```
+gcc-13 g++-13 libtcmalloc-minimal4 libtbb-dev cmake libnuma-dev numactl
+```
+Must use `pyproject_cpu.toml` and build sgl-kernel from source.
+
+## Workflow YAML Gotchas
+- **Heredocs with `[[`**: YAML parsers choke on `[[index]]` in heredocs. Use `printf` instead:
+  ```yaml
+  printf '%s\n' '[[index]]' 'name = "torch"' ... > file.toml
+  ```
+- **GitHub caches workflow metadata**: After pushing workflow changes, may need to wait ~30s for `workflow_dispatch` to be recognized
+- **Race conditions**: Multiple workflows pushing to same branch need `git pull --rebase` before push
 
 ## Key Files
 - `index.html` - dashboard with inline styles

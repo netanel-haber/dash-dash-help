@@ -44,12 +44,14 @@ jobs:
           VERSION: ${{ steps.download.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$TIME_MS" -lt 200 ]; then
-            CLASS="ok"
-          else
-            CLASS="slow"
-          fi
-          sed -i 's|<tr id="llama.cpp">.*</tr>|<tr id="llama.cpp"><td><code>llama-cli --help</code></td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/ggml-org/llama.cpp/releases/tag/'"${VERSION}"'">'"${VERSION}"'</a></td><td><a href="https://github.com/ggml-org/llama.cpp/releases">pre-built binary</a></td><td>-</td></tr>|' index.html
+          python3 scripts/update_row.py \
+            --id llama.cpp \
+            --command "llama-cli --help" \
+            --time-ms "$TIME_MS" \
+            --version "$VERSION" \
+            --version-url "https://github.com/ggml-org/llama.cpp/releases/tag/${VERSION}" \
+            --run-url "$RUN_URL" \
+            --install '<a href="https://github.com/ggml-org/llama.cpp/releases">pre-built binary</a>'
 
       - name: Commit and push
         env:
