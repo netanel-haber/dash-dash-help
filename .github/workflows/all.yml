@@ -6,12 +6,14 @@ on:
 jobs:
   trigger:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Trigger all benchmark workflows
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for workflow in ollama transformers vllm hf sglang llama-cpp lm-eval vlmeval tensorrt-llm; do
+          for workflow in ollama hf llama-cpp lm-eval transformers tensorrt-llm sglang vllm vlmevalkit; do
             echo "Triggering ${workflow}..."
             gh workflow run "${workflow}.yml" --repo ${{ github.repository }}
           done
