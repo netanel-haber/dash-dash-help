@@ -4,7 +4,6 @@
 import argparse
 import re
 import sys
-from html.parser import HTMLParser
 from html import escape
 
 

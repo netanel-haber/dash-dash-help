@@ -5,18 +5,18 @@ Purpose: Help an AI coding agent be immediately productive in this repo by docum
 ## Big picture
 - Single-page dashboard: `index.html` is the single source-of-truth (inline styles + table of tools). Changes are authored by GitHub Actions workflows and occasionally by humans.
 - Per-tool workflows live in `.github/workflows/*.yml`. Each workflow: install tool → get version → benchmark `--help` → checkout → update `index.html` via `scripts/update_row.py` → commit & push.
-- `scripts/update_row.py` builds a new `<tr id="{tool}">...</tr>` and replaces the existing row by id. The table columns are: `command | time | version | install | pr`.
+- `scripts/update_row.py` builds a new `<tr id="{tool}">...</tr>` and replaces the existing row by id.
 
 ## Key files
 - `index.html` — dashboard markup and table rows (row `id` values are canonical tool identifiers).
-- `scripts/update_row.py` — CLI used by workflows to upsert rows. It expects the row `id` to exist and will fail if not found.
+- `scripts/update_row.py` — CLI used by workflows to upsert rows. The table columns are: `command | library | time | version | install | pr`. It expects the row `id` to exist and will fail if not found.
 - `.github/workflows/*.yml` — per-tool benchmark flows (see `ollama.yml` as a short, representative example).
 - `CLAUDE.md` — useful human-maintained notes and gotchas (install tips, apt packages for CPU builds, YAML quirks).
 
 ## Project-specific conventions (actionable)
 - Use `uv` wrapper for Python envs and installs (e.g., `uv venv`, `uv pip install ...`, `uv pip show ...`) — workflows rely on it.
 - Tool identity: workflows pass `--id <tool>` to `scripts/update_row.py`; that `id` must match an existing `<tr id="...">` in `index.html`.
-- New column: `library` (colloquial library name). Workflows can pass `--library "<Name>"` to `scripts/update_row.py` to populate this column; the argument is optional and defaults to `-`.
+- Library column: workflows pass `--library "<Name>"` to `scripts/update_row.py`; defaults to `-`.
 - Install cell can contain HTML/`<details>` markup (passed as raw HTML to `--install`).
 - Speed threshold: rows use CSS classes **ok** (`time_ms < 200`) or **slow** (>=200). `scripts/build_row` enforces this logic.
 - Commit message format: `{tool}: {time_ms}ms @ {version}` — keep this format to maintain history consistency.
