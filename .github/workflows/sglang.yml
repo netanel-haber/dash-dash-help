@@ -25,20 +25,8 @@ jobs:
           uv venv --python 3.12
           VENV_PATH="${PWD}/.venv"
 
-          # Configure uv for CPU-only PyTorch (no leading whitespace!)
-          cat > ${VENV_PATH}/uv.toml << 'EOF'
-[[index]]
-name = "torch"
-url = "https://download.pytorch.org/whl/cpu"
-
-[[index]]
-name = "torchvision"
-url = "https://download.pytorch.org/whl/cpu"
-
-[[index]]
-name = "triton"
-url = "https://download.pytorch.org/whl/cpu"
-EOF
+          # Configure uv for CPU-only PyTorch
+          printf '%s\n' '[[index]]' 'name = "torch"' 'url = "https://download.pytorch.org/whl/cpu"' '' '[[index]]' 'name = "torchvision"' 'url = "https://download.pytorch.org/whl/cpu"' '' '[[index]]' 'name = "triton"' 'url = "https://download.pytorch.org/whl/cpu"' > ${VENV_PATH}/uv.toml
 
           export UV_CONFIG_FILE="${VENV_PATH}/uv.toml"
 
