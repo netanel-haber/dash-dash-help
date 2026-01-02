@@ -133,7 +133,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr id="VLMEvalKit">
+    <tr id="VLMEvalKit">
         <td>VLMEvalKit</td>
         <td><code>./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20668177365">19273ms</a>
@@ -149,7 +149,7 @@ uv pip install -e .</code>
         </td>
         <td>-</td>
       </tr>
-      <tr id="vllm">
+    <tr id="vllm">
         <td>VLLM</td>
         <td><code>./vllm_source/.venv/bin/vllm --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667919667">13791ms</a>
@@ -171,7 +171,7 @@ VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url h
         </td>
         <td>-</td>
       </tr>
-      <tr id="sglang">
+    <tr id="sglang">
         <td>SGLang</td>
         <td><code>.venv/bin/python -m sglang.launch_server --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667880426">11343ms</a>
@@ -182,7 +182,7 @@ VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url h
         <td><a href="https://docs.sglang.io/platforms/cpu_server.html">CPU install</a></td>
         <td>-</td>
       </tr>
-      <tr id="transformers">
+    <tr id="transformers">
         <td>Transformers</td>
         <td><code>.venv/bin/transformers-cli --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667862136">8557ms</a>
@@ -196,7 +196,7 @@ uv pip install transformers torch --extra-index-url https://download.pytorch.org
         </td>
         <td>-</td>
       </tr>
-      <tr id="tensorrt-llm">
+    <tr id="tensorrt-llm">
         <td>TensorRT-LLM</td>
         <td><code>.venv/bin/trtllm-serve --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667868764">1276ms</a>
@@ -205,7 +205,7 @@ uv pip install transformers torch --extra-index-url https://download.pytorch.org
         <td><code>uv pip install tensorrt-llm</code></td>
         <td>-</td>
       </tr>
-      <tr id="hf">
+    <tr id="hf">
         <td>Hugging Face Hub</td>
         <td><code>.venv/bin/hf --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667840850">734ms</a>
@@ -214,15 +214,7 @@ uv pip install transformers torch --extra-index-url https://download.pytorch.org
         <td><code>uv pip install huggingface_hub</code></td>
         <td>-</td>
       </tr>
-      <tr id="llama.cpp">
-        <td>llama.cpp</td>
-        <td><code>./llama-bin/llama-cli --help</code></td>
-        <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667845958">16ms</a></td>
-        <td><a href="https://github.com/ggml-org/llama.cpp/releases/tag/b7615">b7615</a></td>
-        <td><a href="https://github.com/ggml-org/llama.cpp/releases">pre-built binary</a></td>
-        <td>-</td>
-      </tr>
-      <tr id="lm-eval">
+    <tr id="lm-eval">
         <td>lm-eval</td>
         <td><code>.venv/bin/lm-eval --help</code></td>
         <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667849112">51ms</a></td>
@@ -230,7 +222,15 @@ uv pip install transformers torch --extra-index-url https://download.pytorch.org
         <td><code>uv pip install lm-eval</code></td>
         <td>-</td>
       </tr>
-      <tr id="ollama">
+    <tr id="llama.cpp">
+        <td>llama.cpp</td>
+        <td><code>./llama-bin/llama-cli --help</code></td>
+        <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667845958">16ms</a></td>
+        <td><a href="https://github.com/ggml-org/llama.cpp/releases/tag/b7615">b7615</a></td>
+        <td><a href="https://github.com/ggml-org/llama.cpp/releases">pre-built binary</a></td>
+        <td>-</td>
+      </tr>
+    <tr id="ollama">
         <td>Ollama</td>
         <td><code>ollama --help</code></td>
         <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667817875">13ms</a></td>
