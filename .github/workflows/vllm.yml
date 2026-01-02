@@ -30,8 +30,7 @@ jobs:
       - name: Benchmark and update
         run: |
           INSTALL='<code>VLLM_TARGET_DEVICE=cpu VLLM_USE_PRECOMPILED=1 uv pip install "vllm @ git+https://github.com/vllm-project/vllm.git@${TAG}"' \
-          source .venv/bin/activate && \
-          python3 work.py bench "vllm --help" \
+          python3 work.py bench ".venv/bin/vllm --help" \
             --id vllm --library VLLM \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/vllm-project/vllm/releases/tag/${{ steps.version.outputs.tag }}" \
