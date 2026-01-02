@@ -1,0 +1,17 @@
+name: Run all benchmarks
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger all benchmark workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for workflow in ollama transformers vllm hf sglang llama-cpp lm-eval vlmeval tensorrt-llm; do
+            echo "Triggering ${workflow}..."
+            gh workflow run "${workflow}.yml" --repo ${{ github.repository }}
+          done
