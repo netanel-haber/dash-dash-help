@@ -94,7 +94,8 @@ def main() -> None:
         log(f"WARNING: Command exited with code {exit_code}")
 
     if time_ms == 0:
-        log("WARNING: 0ms benchmark - command may have failed immediately")
+        log("ERROR: 0ms benchmark - command failed immediately or path doesn't exist")
+        sys.exit(1)
 
     print(f"{args.command}: {time_ms}ms")
 
