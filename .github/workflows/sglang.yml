@@ -13,26 +13,32 @@ jobs:
     steps:
       - uses: astral-sh/setup-uv@v5
 
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-13 g++-13 libtcmalloc-minimal4 libtbb-dev cmake
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+
       - name: Install sglang (CPU)
         run: |
-          # Create venv
           uv venv --python 3.12
           VENV_PATH="${PWD}/.venv"
 
-          # Configure uv for CPU-only PyTorch
+          # Configure uv for CPU-only PyTorch (no leading whitespace!)
           cat > ${VENV_PATH}/uv.toml << 'EOF'
-          [[index]]
-          name = "torch"
-          url = "https://download.pytorch.org/whl/cpu"
+[[index]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cpu"
 
-          [[index]]
-          name = "torchvision"
-          url = "https://download.pytorch.org/whl/cpu"
+[[index]]
+name = "torchvision"
+url = "https://download.pytorch.org/whl/cpu"
 
-          [[index]]
-          name = "triton"
-          url = "https://download.pytorch.org/whl/cpu"
-          EOF
+[[index]]
+name = "triton"
+url = "https://download.pytorch.org/whl/cpu"
+EOF
 
           export UV_CONFIG_FILE="${VENV_PATH}/uv.toml"
 
@@ -55,7 +61,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(uv pip show sglang | grep Version | cut -d' ' -f2)
+          VERSION=$(.venv/bin/python -c "import sglang; print(sglang.__version__)" 2>/dev/null || uv pip show --python .venv sglang | grep Version | cut -d' ' -f2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Benchmark --help
@@ -82,7 +88,7 @@ jobs:
           else
             CLASS="slow"
           fi
-          sed -i 's|<tr id="sglang">.*</tr>|<tr id="sglang"><td>sglang</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/sgl-project/sglang/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><a href="https://docs.sglang.ai/platforms/cpu_server.html">CPU install</a></td><td><code>python -m sglang.launch_server --help</code></td><td>-</td></tr>|' index.html
+          sed -i 's|<tr id="sglang">.*</tr>|<tr id="sglang"><td>sglang</td><td class="'"${CLASS}"'"><a href="'"${RUN_URL}"'">'"${TIME_MS}"'ms</a></td><td><a href="https://github.com/sgl-project/sglang/releases/tag/v'"${VERSION}"'">'"${VERSION}"'</a></td><td><a href="https://docs.sglang.io/platforms/cpu_server.html">CPU install</a></td><td><code>python -m sglang.launch_server --help</code></td><td>-</td></tr>|' index.html
 
       - name: Commit and push
         env:
@@ -94,3 +100,4 @@ jobs:
           git add index.html
           git diff --staged --quiet || git commit -m "sglang: ${TIME_MS}ms @ ${VERSION}"
           git push
+
