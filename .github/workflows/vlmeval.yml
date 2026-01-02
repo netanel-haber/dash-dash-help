@@ -13,20 +13,24 @@ jobs:
     steps:
       - uses: astral-sh/setup-uv@v5
 
-      - name: Install vlmeval
+      - name: Install vlmeval from source
         run: |
+          git clone --depth 1 https://github.com/open-compass/VLMEvalKit.git
+          cd VLMEvalKit
           uv venv
-          uv pip install ms-vlmeval
+          uv pip install -e .
 
       - name: Get version
         id: version
         run: |
-          VERSION=$(uv pip show ms-vlmeval | grep Version | cut -d' ' -f2)
+          cd VLMEvalKit
+          VERSION=$(uv pip show vlmeval | grep Version | cut -d' ' -f2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Benchmark --help
         id: bench
         run: |
+          cd VLMEvalKit
           start=$(date +%s%N)
           .venv/bin/vlmutil --help > /dev/null
           end=$(date +%s%N)
@@ -49,7 +53,10 @@ jobs:
             --version "$VERSION" \
             --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/v${VERSION}" \
             --run-url "$RUN_URL" \
-            --install '<code>uv pip install ms-vlmeval</code>'
+            --install '<details><summary><code>build from source</code></summary><code>git clone https://github.com/open-compass/VLMEvalKit.git
+cd VLMEvalKit
+uv venv
+uv pip install -e .</code></details>'
 
       - name: Commit and push
         env:
