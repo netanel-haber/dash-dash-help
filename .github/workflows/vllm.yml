@@ -76,6 +76,7 @@ jobs:
           python3 scripts/update_row.py \
             --id vllm \
             --command "vllm --help" \
+            --library "VLLM" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/vllm-project/vllm/releases/tag/${TAG}" \

@@ -48,6 +48,7 @@ jobs:
           python3 scripts/update_row.py \
             --id tensorrt-llm \
             --command "trtllm-serve --help" \
+            --library "TensorRT-LLM" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v${VERSION}" \

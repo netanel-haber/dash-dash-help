@@ -47,6 +47,7 @@ jobs:
           python3 scripts/update_row.py \
             --id transformers \
             --command "transformers-cli --help" \
+            --library "Transformers" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/huggingface/transformers/releases/tag/v${VERSION}" \

@@ -74,6 +74,7 @@ jobs:
           python3 scripts/update_row.py \
             --id sglang \
             --command "python -m sglang.launch_server --help" \
+            --library "SGLang" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/sgl-project/sglang/releases/tag/v${VERSION}" \

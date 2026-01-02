@@ -45,6 +45,7 @@ jobs:
           python3 scripts/update_row.py \
             --id lm-eval \
             --command "lm-eval --help" \
+            --library "lm-eval" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v${VERSION}" \

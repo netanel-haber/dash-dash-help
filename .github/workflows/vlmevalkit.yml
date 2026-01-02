@@ -53,6 +53,7 @@ jobs:
           python3 scripts/update_row.py \
             --id VLMEvalKit \
             --command ".venv/bin/python run.py --help" \
+            --library "VLMEvalKit" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/v${VERSION}" \

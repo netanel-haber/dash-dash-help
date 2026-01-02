@@ -41,6 +41,7 @@ jobs:
           python3 scripts/update_row.py \
             --id ollama \
             --command "ollama --help" \
+            --library "Ollama" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/ollama/ollama/releases/tag/v${VERSION}" \

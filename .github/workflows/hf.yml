@@ -45,6 +45,7 @@ jobs:
           python3 scripts/update_row.py \
             --id hf \
             --command "hf --help" \
+            --library "Hugging Face Hub" \
             --time-ms "$TIME_MS" \
             --version "$VERSION" \
             --version-url "https://github.com/huggingface/huggingface_hub/releases/tag/v${VERSION}" \

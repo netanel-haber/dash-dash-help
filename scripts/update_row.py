@@ -8,13 +8,14 @@ from html.parser import HTMLParser
 from html import escape
 
 
-def build_row(row_id: str, command: str, time_ms: int, version: str,
+def build_row(row_id: str, command: str, library: str, time_ms: int, version: str,
               version_url: str, run_url: str, install: str, pr: str = "-") -> str:
     """Build a table row HTML string."""
     css_class = "ok" if time_ms < 200 else "slow"
     return (
         f'<tr id="{row_id}">'
         f'<td><code>{escape(command)}</code></td>'
+        f'<td>{escape(library)}</td>'
         f'<td class="{css_class}"><a href="{run_url}">{time_ms}ms</a></td>'
         f'<td><a href="{version_url}">{escape(version)}</a></td>'
         f'<td>{install}</td>'
@@ -47,6 +48,7 @@ def main():
     parser.add_argument("--run-url", required=True, help="URL for workflow run")
     parser.add_argument("--install", required=True, help="Install instructions (raw HTML)")
     parser.add_argument("--pr", default="-", help="PR link or dash")
+    parser.add_argument("--library", default="-", help="Colloquial library name for the new 'library' column")
 
     args = parser.parse_args()
 
@@ -56,6 +58,7 @@ def main():
     new_row = build_row(
         row_id=args.id,
         command=args.command,
+        library=args.library,
         time_ms=args.time_ms,
         version=args.version,
         version_url=args.version_url,
