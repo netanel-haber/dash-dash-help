@@ -124,8 +124,8 @@
   <table id="bench">
     <thead>
       <tr>
-        <th scope="col">command</th>
         <th scope="col">library</th>
+        <th scope="col">command</th>
         <th scope="col">time</th>
         <th scope="col">version</th>
         <th scope="col">install</th>
@@ -133,9 +133,25 @@
       </tr>
     </thead>
     <tbody>
+      <tr id="VLMEvalKit">
+        <td>VLMEvalKit</td>
+        <td><code>./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help</code></td>
+        <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20668177365">19273ms</a>
+        </td>
+        <td><a href="https://github.com/open-compass/VLMEvalKit/releases/tag/v0.1.0">0.1.0</a></td>
+        <td>
+          <details>
+            <summary><code>build from source</code></summary><code>git clone https://github.com/open-compass/VLMEvalKit.git
+cd VLMEvalKit
+uv venv
+uv pip install -e .</code>
+          </details>
+        </td>
+        <td>-</td>
+      </tr>
       <tr id="vllm">
-        <td><code>./vllm_source/.venv/bin/vllm --help</code></td>
         <td>VLLM</td>
+        <td><code>./vllm_source/.venv/bin/vllm --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667919667">13791ms</a>
         </td>
         <td><a href="https://github.com/vllm-project/vllm/releases/tag/v0.13.0">0.13.0+cpu</a></td>
@@ -156,8 +172,8 @@ VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url h
         <td>-</td>
       </tr>
       <tr id="sglang">
-        <td><code>.venv/bin/python -m sglang.launch_server --help</code></td>
         <td>SGLang</td>
+        <td><code>.venv/bin/python -m sglang.launch_server --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667880426">11343ms</a>
         </td>
         <td><a
@@ -166,25 +182,9 @@ VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url h
         <td><a href="https://docs.sglang.io/platforms/cpu_server.html">CPU install</a></td>
         <td>-</td>
       </tr>
-      <tr id="ollama">
-        <td><code>ollama --help</code></td>
-        <td>Ollama</td>
-        <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667817875">13ms</a></td>
-        <td><a href="https://github.com/ollama/ollama/releases/tag/v0.13.5">0.13.5</a></td>
-        <td><code>curl -fsSL https://ollama.com/install.sh | sh</code></td>
-        <td>-</td>
-      </tr>
-      <tr id="llama.cpp">
-        <td><code>./llama-bin/llama-cli --help</code></td>
-        <td>llama.cpp</td>
-        <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667845958">16ms</a></td>
-        <td><a href="https://github.com/ggml-org/llama.cpp/releases/tag/b7615">b7615</a></td>
-        <td><a href="https://github.com/ggml-org/llama.cpp/releases">pre-built binary</a></td>
-        <td>-</td>
-      </tr>
       <tr id="transformers">
-        <td><code>.venv/bin/transformers-cli --help</code></td>
         <td>Transformers</td>
+        <td><code>.venv/bin/transformers-cli --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667862136">8557ms</a>
         </td>
         <td><a href="https://github.com/huggingface/transformers/releases/tag/v4.57.3">4.57.3</a></td>
@@ -196,9 +196,18 @@ uv pip install transformers torch --extra-index-url https://download.pytorch.org
         </td>
         <td>-</td>
       </tr>
+      <tr id="tensorrt-llm">
+        <td>TensorRT-LLM</td>
+        <td><code>.venv/bin/trtllm-serve --help</code></td>
+        <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667868764">1276ms</a>
+        </td>
+        <td><a href="https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.1.0">1.1.0</a></td>
+        <td><code>uv pip install tensorrt-llm</code></td>
+        <td>-</td>
+      </tr>
       <tr id="hf">
-        <td><code>.venv/bin/hf --help</code></td>
         <td>Hugging Face Hub</td>
+        <td><code>.venv/bin/hf --help</code></td>
         <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667840850">734ms</a>
         </td>
         <td><a href="https://github.com/huggingface/huggingface_hub/releases/tag/v1.2.3">1.2.3</a></td>
@@ -206,64 +215,31 @@ uv pip install transformers torch --extra-index-url https://download.pytorch.org
         <td>-</td>
       </tr>
       <tr id="lm-eval">
-        <td><code>.venv/bin/lm-eval --help</code></td>
         <td>lm-eval</td>
+        <td><code>.venv/bin/lm-eval --help</code></td>
         <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667849112">51ms</a></td>
         <td><a href="https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.9.2">0.4.9.2</a></td>
         <td><code>uv pip install lm-eval</code></td>
         <td>-</td>
       </tr>
-      <tr id="VLMEvalKit">
-        <td><code>./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help</code></td>
-        <td>VLMEvalKit</td>
-        <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20668177365">19273ms</a>
-        </td>
-        <td><a href="https://github.com/open-compass/VLMEvalKit/releases/tag/v0.1.0">0.1.0</a></td>
-        <td>
-          <details>
-            <summary><code>build from source</code></summary><code>git clone https://github.com/open-compass/VLMEvalKit.git
-cd VLMEvalKit
-uv venv
-uv pip install -e .</code>
-          </details>
-        </td>
+      <tr id="llama.cpp">
+        <td>llama.cpp</td>
+        <td><code>./llama-bin/llama-cli --help</code></td>
+        <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667845958">16ms</a></td>
+        <td><a href="https://github.com/ggml-org/llama.cpp/releases/tag/b7615">b7615</a></td>
+        <td><a href="https://github.com/ggml-org/llama.cpp/releases">pre-built binary</a></td>
         <td>-</td>
       </tr>
-      <tr id="tensorrt-llm">
-        <td><code>.venv/bin/trtllm-serve --help</code></td>
-        <td>TensorRT-LLM</td>
-        <td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667868764">1276ms</a>
-        </td>
-        <td><a href="https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.1.0">1.1.0</a></td>
-        <td><code>uv pip install tensorrt-llm</code></td>
+      <tr id="ollama">
+        <td>Ollama</td>
+        <td><code>ollama --help</code></td>
+        <td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20667817875">13ms</a></td>
+        <td><a href="https://github.com/ollama/ollama/releases/tag/v0.13.5">0.13.5</a></td>
+        <td><code>curl -fsSL https://ollama.com/install.sh | sh</code></td>
         <td>-</td>
       </tr>
     </tbody>
   </table>
-  <script>
-    const table = document.getElementById("bench");
-    const headers = [...table.tHead.rows[0].cells];
-    headers.forEach((th, i) => {
-      th.tabIndex = 0;
-      th.setAttribute("aria-sort", "none");
-      const sort = () => {
-        const dir = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";
-        headers.forEach(h => h.setAttribute("aria-sort", "none"));
-        th.setAttribute("aria-sort", dir);
-        const rows = [...table.tBodies[0].rows];
-        const mul = dir === "ascending" ? 1 : -1;
-        rows.sort((a, b) => {
-          const x = a.cells[i].textContent.trim();
-          const y = b.cells[i].textContent.trim();
-          const nx = parseFloat(x), ny = parseFloat(y);
-          return (isNaN(nx) || isNaN(ny) ? x.localeCompare(y) : nx - ny) * mul;
-        });
-        rows.forEach(r => table.tBodies[0].appendChild(r));
-      };
-      th.addEventListener("click", sort);
-      th.addEventListener("keydown", e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), sort()));
-    });
-  </script>
 </body>
 
 </html>
