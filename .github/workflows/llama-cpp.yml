@@ -12,55 +12,20 @@ jobs:
       contents: write
     steps:
       - name: Download latest release
-        id: download
+        id: version
         run: |
-          # Get latest release info
-          RELEASE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest)
-          TAG=$(echo "$RELEASE" | jq -r '.tag_name')
-          echo "version=$TAG" >> $GITHUB_OUTPUT
-
-          # Download Ubuntu x64 CPU build
-          ASSET_URL="https://github.com/ggml-org/llama.cpp/releases/download/${TAG}/llama-${TAG}-bin-ubuntu-x64.tar.gz"
-          curl -L -o llama.tar.gz "$ASSET_URL"
-          mkdir -p llama-bin
-          tar -xzf llama.tar.gz -C llama-bin --strip-components=1
+          TAG=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.tag_name')
+          echo "v=$TAG" >> $GITHUB_OUTPUT
+          curl -L -o llama.tar.gz "https://github.com/ggml-org/llama.cpp/releases/download/${TAG}/llama-${TAG}-bin-ubuntu-x64.tar.gz"
+          mkdir -p llama-bin && tar -xzf llama.tar.gz -C llama-bin --strip-components=1
           chmod +x llama-bin/*
-
-      - name: Benchmark --help
-        id: bench
-        run: |
-          start=$(date +%s%N)
-          ./llama-bin/llama-cli --help > /dev/null
-          end=$(date +%s%N)
-          ms=$(( (end - start) / 1000000 ))
-          echo "time_ms=$ms" >> $GITHUB_OUTPUT
-          echo "llama-cli --help: ${ms}ms"
 
       - uses: actions/checkout@v4
 
-      - name: Update index.html
-        env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.download.outputs.version }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Benchmark and update
         run: |
-          python3 scripts/update_row.py \
-            --id llama.cpp \
-            --command "llama-cli --help" \
-            --library "llama.cpp" \
-            --time-ms "$TIME_MS" \
-            --version "$VERSION" \
-            --version-url "https://github.com/ggml-org/llama.cpp/releases/tag/${VERSION}" \
-            --run-url "$RUN_URL" \
+          python3 scripts/bench.py "./llama-bin/llama-cli --help" \
+            --id llama.cpp --library llama.cpp \
+            --version "${{ steps.version.outputs.v }}" \
+            --version-url "https://github.com/ggml-org/llama.cpp/releases/tag/${{ steps.version.outputs.v }}" \
             --install '<a href="https://github.com/ggml-org/llama.cpp/releases">pre-built binary</a>'
-
-      - name: Commit and push
-        env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.download.outputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --staged --quiet || git commit -m "llama.cpp: ${TIME_MS}ms @ ${VERSION}"
-          git push

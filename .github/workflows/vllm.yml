@@ -19,77 +19,37 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
-      - name: Get latest vllm release tag
-        id: tag
+      - name: Get latest tag and build
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           TAG=$(gh api repos/vllm-project/vllm/releases/latest --jq '.tag_name')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "Latest vllm release: $TAG"
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Clone and build vllm for CPU
-        run: |
-          git clone --depth 1 --single-branch --branch ${{ steps.tag.outputs.tag }} https://github.com/vllm-project/vllm.git vllm_source
+          git clone --depth 1 --single-branch --branch $TAG https://github.com/vllm-project/vllm.git vllm_source
           cd vllm_source
           uv venv
           uv pip install cmake wheel packaging ninja "setuptools-scm>=8" numpy
           uv pip install -r requirements/cpu.txt --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu
           VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --index-strategy unsafe-best-match --extra-index-url https://download.pytorch.org/whl/cpu
-
-      - name: Get vllm version
-        id: version
-        run: |
-          cd vllm_source
           VERSION=$(uv pip show vllm | grep Version | cut -d' ' -f2)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Benchmark --help
-        id: bench
-        run: |
-          cd vllm_source
-          start=$(date +%s%N)
-          .venv/bin/vllm --help > /dev/null
-          end=$(date +%s%N)
-          ms=$(( (end - start) / 1000000 ))
-          echo "time_ms=$ms" >> $GITHUB_OUTPUT
-          echo "vllm --help: ${ms}ms"
+          echo "v=$VERSION" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v4
 
-      - name: Update index.html
-        env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.version.outputs.version }}
-          TAG: ${{ steps.tag.outputs.tag }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Benchmark and update
         run: |
-          INSTALL_HTML="<details><summary><code>build from source</code></summary><code>sudo apt-get update -y
+          INSTALL="<details><summary><code>build from source</code></summary><code>sudo apt-get update -y
           sudo apt-get install -y gcc-12 g++-12 libnuma-dev
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10 --slave /usr/bin/g++ g++ /usr/bin/g++-12
-          git clone --depth 1 --branch ${TAG} https://github.com/vllm-project/vllm.git
+          git clone --depth 1 --branch ${{ steps.version.outputs.tag }} https://github.com/vllm-project/vllm.git
           cd vllm
           uv venv
           uv pip install cmake wheel packaging ninja \"setuptools-scm>=8\" numpy
           uv pip install -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
           VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url https://download.pytorch.org/whl/cpu</code></details>"
-          python3 scripts/update_row.py \
-            --id vllm \
-            --command "vllm --help" \
-            --library "VLLM" \
-            --time-ms "$TIME_MS" \
-            --version "$VERSION" \
-            --version-url "https://github.com/vllm-project/vllm/releases/tag/${TAG}" \
-            --run-url "$RUN_URL" \
-            --install "$INSTALL_HTML"
-
-      - name: Commit and push
-        env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --staged --quiet || git commit -m "vllm: ${TIME_MS}ms @ ${VERSION}"
-          git push
+          python3 scripts/bench.py "./vllm_source/.venv/bin/vllm --help" \
+            --id vllm --library VLLM \
+            --version "${{ steps.version.outputs.v }}" \
+            --version-url "https://github.com/vllm-project/vllm/releases/tag/${{ steps.version.outputs.tag }}" \
+            --install "$INSTALL"

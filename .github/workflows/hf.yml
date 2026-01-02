@@ -20,42 +20,14 @@ jobs:
 
       - name: Get version
         id: version
-        run: |
-          VERSION=$(uv pip show huggingface_hub | grep Version | cut -d' ' -f2)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Benchmark --help
-        id: bench
-        run: |
-          start=$(date +%s%N)
-          .venv/bin/hf --help > /dev/null
-          end=$(date +%s%N)
-          ms=$(( (end - start) / 1000000 ))
-          echo "time_ms=$ms" >> $GITHUB_OUTPUT
-          echo "hf --help: ${ms}ms"
+        run: echo "v=$(uv pip show huggingface_hub | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v4
 
-      - name: Update index.html
-        env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.version.outputs.version }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Benchmark and update
         run: |
-          python3 scripts/update_row.py \
-            --id hf \
-            --command "hf --help" \
-            --library "Hugging Face Hub" \
-            --time-ms "$TIME_MS" \
-            --version "$VERSION" \
-            --version-url "https://github.com/huggingface/huggingface_hub/releases/tag/v${VERSION}" \
-            --run-url "$RUN_URL" \
+          python3 scripts/bench.py ".venv/bin/hf --help" \
+            --id hf --library "Hugging Face Hub" \
+            --version "${{ steps.version.outputs.v }}" \
+            --version-url "https://github.com/huggingface/huggingface_hub/releases/tag/v${{ steps.version.outputs.v }}" \
             --install '<code>uv pip install huggingface_hub</code>'
-
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --staged --quiet || git commit -m "hf: ${TIME_MS}ms @ ${VERSION}"
-          git push

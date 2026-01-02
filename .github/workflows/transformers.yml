@@ -20,44 +20,16 @@ jobs:
 
       - name: Get version
         id: version
-        run: |
-          VERSION=$(uv pip show transformers | grep Version | cut -d' ' -f2)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Benchmark --help
-        id: bench
-        run: |
-          start=$(date +%s%N)
-          .venv/bin/transformers-cli --help > /dev/null
-          end=$(date +%s%N)
-          ms=$(( (end - start) / 1000000 ))
-          echo "time_ms=$ms" >> $GITHUB_OUTPUT
-          echo "transformers-cli --help: ${ms}ms"
+        run: echo "v=$(uv pip show transformers | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v4
 
-      - name: Update index.html
-        env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.version.outputs.version }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Benchmark and update
         run: |
-          INSTALL_HTML='<details><summary><code>uv pip install transformers torch</code></summary><code>uv venv
+          INSTALL='<details><summary><code>uv pip install transformers torch</code></summary><code>uv venv
           uv pip install transformers torch --extra-index-url https://download.pytorch.org/whl/cpu</code></details>'
-          python3 scripts/update_row.py \
-            --id transformers \
-            --command "transformers-cli --help" \
-            --library "Transformers" \
-            --time-ms "$TIME_MS" \
-            --version "$VERSION" \
-            --version-url "https://github.com/huggingface/transformers/releases/tag/v${VERSION}" \
-            --run-url "$RUN_URL" \
-            --install "$INSTALL_HTML"
-
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --staged --quiet || git commit -m "transformers: ${TIME_MS}ms @ ${VERSION}"
-          git push
+          python3 scripts/bench.py ".venv/bin/transformers-cli --help" \
+            --id transformers --library Transformers \
+            --version "${{ steps.version.outputs.v }}" \
+            --version-url "https://github.com/huggingface/transformers/releases/tag/v${{ steps.version.outputs.v }}" \
+            --install "$INSTALL"

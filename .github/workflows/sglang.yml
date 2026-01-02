@@ -24,71 +24,30 @@ jobs:
         run: |
           uv venv --python 3.12
           VENV_PATH="${PWD}/.venv"
-
-          # Configure uv for CPU-only PyTorch
           printf '%s\n' '[[index]]' 'name = "torch"' 'url = "https://download.pytorch.org/whl/cpu"' '' '[[index]]' 'name = "torchvision"' 'url = "https://download.pytorch.org/whl/cpu"' '' '[[index]]' 'name = "triton"' 'url = "https://download.pytorch.org/whl/cpu"' > ${VENV_PATH}/uv.toml
-
           export UV_CONFIG_FILE="${VENV_PATH}/uv.toml"
-
-          # Clone sglang repo
           git clone https://github.com/sgl-project/sglang.git /tmp/sglang
-          cd /tmp/sglang
-
-          # Build python package
-          cd python
+          cd /tmp/sglang/python
           cp pyproject_cpu.toml pyproject.toml
           uv pip install --python ${VENV_PATH} --upgrade pip setuptools
           uv pip install --python ${VENV_PATH} .
           uv pip install --python ${VENV_PATH} torch==2.9.0 torchvision==0.24.0 triton==3.5.0 --force-reinstall
-
-          # Build sgl-kernel
           cd ../sgl-kernel
           cp pyproject_cpu.toml pyproject.toml
           uv pip install --python ${VENV_PATH} .
 
       - name: Get version
         id: version
-        run: |
-          VERSION=$(.venv/bin/python -c "import sglang; print(sglang.__version__)" 2>/dev/null || uv pip show --python .venv sglang | grep Version | cut -d' ' -f2)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Benchmark --help
-        id: bench
-        run: |
-          export SGLANG_USE_CPU_ENGINE=1
-          start=$(date +%s%N)
-          .venv/bin/python -m sglang.launch_server --help > /dev/null
-          end=$(date +%s%N)
-          ms=$(( (end - start) / 1000000 ))
-          echo "time_ms=$ms" >> $GITHUB_OUTPUT
-          echo "python -m sglang.launch_server --help: ${ms}ms"
+        run: echo "v=$(.venv/bin/python -c 'import sglang; print(sglang.__version__)' 2>/dev/null || uv pip show --python .venv sglang | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v4
 
-      - name: Update index.html
+      - name: Benchmark and update
         env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.version.outputs.version }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SGLANG_USE_CPU_ENGINE: "1"
         run: |
-          python3 scripts/update_row.py \
-            --id sglang \
-            --command "python -m sglang.launch_server --help" \
-            --library "SGLang" \
-            --time-ms "$TIME_MS" \
-            --version "$VERSION" \
-            --version-url "https://github.com/sgl-project/sglang/releases/tag/v${VERSION}" \
-            --run-url "$RUN_URL" \
+          python3 scripts/bench.py ".venv/bin/python -m sglang.launch_server --help" \
+            --id sglang --library SGLang \
+            --version "${{ steps.version.outputs.v }}" \
+            --version-url "https://github.com/sgl-project/sglang/releases/tag/v${{ steps.version.outputs.v }}" \
             --install '<a href="https://docs.sglang.io/platforms/cpu_server.html">CPU install</a>'
-
-      - name: Commit and push
-        env:
-          TIME_MS: ${{ steps.bench.outputs.time_ms }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --staged --quiet || git commit -m "sglang: ${TIME_MS}ms @ ${VERSION}"
-          git push
-
