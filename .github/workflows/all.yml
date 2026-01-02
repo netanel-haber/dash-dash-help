@@ -9,11 +9,14 @@ jobs:
     permissions:
       actions: write
     steps:
-      - name: Trigger all benchmark workflows
+      - name: Run benchmarks sequentially
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           for workflow in ollama hf llama-cpp lm-eval transformers tensorrt-llm sglang vllm vlmevalkit; do
-            echo "Triggering ${workflow}..."
+            echo "=== Running ${workflow} ==="
             gh workflow run "${workflow}.yml" --repo ${{ github.repository }}
+            sleep 5
+            run_id=$(gh run list --workflow="${workflow}.yml" --repo ${{ github.repository }} --limit 1 --json databaseId -q '.[0].databaseId')
+            gh run watch "$run_id" --repo ${{ github.repository }} --exit-status || true
           done
