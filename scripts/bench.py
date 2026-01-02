@@ -10,7 +10,10 @@ import sys
 import time
 from pathlib import Path
 
-SCRIPTS_DIR = Path(__file__).parent
+from update_row import build_row, update_row
+
+ROOT_DIR = Path(__file__).parent.parent
+INDEX_HTML = ROOT_DIR / "index.html"
 
 
 def log(msg: str) -> None:
@@ -100,17 +103,20 @@ def main() -> None:
     print(f"{args.command}: {time_ms}ms")
 
     log("Updating index.html...")
-    run([
-        "python3", str(SCRIPTS_DIR / "update_row.py"),
-        "--id", args.id,
-        "--command", args.command,
-        "--library", args.library or args.id,
-        "--time-ms", str(time_ms),
-        "--version", args.version,
-        "--version-url", args.version_url,
-        "--run-url", build_run_url(),
-        "--install", args.install,
-    ])
+    html_content = INDEX_HTML.read_text()
+    new_row = build_row(
+        row_id=args.id,
+        command=args.command,
+        library=args.library or args.id,
+        time_ms=time_ms,
+        version=args.version,
+        version_url=args.version_url,
+        run_url=build_run_url(),
+        install=args.install,
+    )
+    updated_html = update_row(html_content, args.id, new_row)
+    INDEX_HTML.write_text(updated_html)
+    log(f"Updated row '{args.id}': {time_ms}ms @ {args.version}")
 
     git_commit_and_push(args.id, time_ms, args.version)
     log("=== Done ===")
