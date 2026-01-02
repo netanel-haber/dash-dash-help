@@ -46,6 +46,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          INSTALL_HTML='<details><summary><code>build from source</code></summary><code>git clone https://github.com/open-compass/VLMEvalKit.git
+          cd VLMEvalKit
+          uv venv
+          uv pip install -e .</code></details>'
           python3 scripts/update_row.py \
             --id vlmeval \
             --command "vlmutil --help" \
@@ -53,10 +57,7 @@ jobs:
             --version "$VERSION" \
             --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/v${VERSION}" \
             --run-url "$RUN_URL" \
-            --install '<details><summary><code>build from source</code></summary><code>git clone https://github.com/open-compass/VLMEvalKit.git
-cd VLMEvalKit
-uv venv
-uv pip install -e .</code></details>'
+            --install "$INSTALL_HTML"
 
       - name: Commit and push
         env:

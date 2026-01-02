@@ -64,6 +64,15 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          INSTALL_HTML="<details><summary><code>build from source</code></summary><code>sudo apt-get update -y
+          sudo apt-get install -y gcc-12 g++-12 libnuma-dev
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10 --slave /usr/bin/g++ g++ /usr/bin/g++-12
+          git clone --depth 1 --branch ${TAG} https://github.com/vllm-project/vllm.git
+          cd vllm
+          uv venv
+          uv pip install cmake wheel packaging ninja \"setuptools-scm>=8\" numpy
+          uv pip install -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
+          VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url https://download.pytorch.org/whl/cpu</code></details>"
           python3 scripts/update_row.py \
             --id vllm \
             --command "vllm --help" \
@@ -71,15 +80,7 @@ jobs:
             --version "$VERSION" \
             --version-url "https://github.com/vllm-project/vllm/releases/tag/${TAG}" \
             --run-url "$RUN_URL" \
-            --install "<details><summary><code>build from source</code></summary><code>sudo apt-get update -y
-sudo apt-get install -y gcc-12 g++-12 libnuma-dev
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 10 --slave /usr/bin/g++ g++ /usr/bin/g++-12
-git clone --depth 1 --branch ${TAG} https://github.com/vllm-project/vllm.git
-cd vllm
-uv venv
-uv pip install cmake wheel packaging ninja \"setuptools-scm>=8\" numpy
-uv pip install -r requirements/cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
-VLLM_TARGET_DEVICE=cpu uv pip install . --no-build-isolation --extra-index-url https://download.pytorch.org/whl/cpu</code></details>"
+            --install "$INSTALL_HTML"
 
       - name: Commit and push
         env:

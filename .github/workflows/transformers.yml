@@ -42,6 +42,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          INSTALL_HTML='<details><summary><code>uv pip install transformers torch</code></summary><code>uv venv
+          uv pip install transformers torch --extra-index-url https://download.pytorch.org/whl/cpu</code></details>'
           python3 scripts/update_row.py \
             --id transformers \
             --command "transformers-cli --help" \
@@ -49,8 +51,7 @@ jobs:
             --version "$VERSION" \
             --version-url "https://github.com/huggingface/transformers/releases/tag/v${VERSION}" \
             --run-url "$RUN_URL" \
-            --install '<details><summary><code>uv pip install transformers torch</code></summary><code>uv venv
-uv pip install transformers torch --extra-index-url https://download.pytorch.org/whl/cpu</code></details>'
+            --install "$INSTALL_HTML"
 
       - name: Commit and push
         run: |
