@@ -11,6 +11,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download latest release
         id: version
         run: |
@@ -19,8 +21,6 @@ jobs:
           curl -L -o llama.tar.gz "https://github.com/ggml-org/llama.cpp/releases/download/${TAG}/llama-${TAG}-bin-ubuntu-x64.tar.gz"
           mkdir -p llama-bin && tar -xzf llama.tar.gz -C llama-bin --strip-components=1
           chmod +x llama-bin/*
-
-      - uses: actions/checkout@v4
 
       - name: Benchmark and update
         run: |

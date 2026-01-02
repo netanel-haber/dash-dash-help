@@ -11,14 +11,14 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Install ollama
         run: curl -fsSL https://ollama.com/install.sh | sh
 
       - name: Get version
         id: version
         run: echo "v=$(ollama --version | grep -oP 'version is \K[0-9.]+')" >> $GITHUB_OUTPUT
-
-      - uses: actions/checkout@v4
 
       - name: Benchmark and update
         run: |

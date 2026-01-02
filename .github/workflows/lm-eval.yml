@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
 
       - name: Install lm-eval
@@ -21,8 +22,6 @@ jobs:
       - name: Get version
         id: version
         run: echo "v=$(uv pip show lm-eval | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
-
-      - uses: actions/checkout@v4
 
       - name: Benchmark and update
         run: |

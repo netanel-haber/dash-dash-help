@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
 
       - name: Install tensorrt-llm
@@ -23,11 +24,9 @@ jobs:
         id: version
         run: echo "v=$(uv pip show tensorrt-llm | grep Version | cut -d' ' -f2 || echo unknown)" >> $GITHUB_OUTPUT
 
-      - uses: actions/checkout@v4
-
       - name: Benchmark and update
         run: |
-          python3 scripts/bench.py ".venv/bin/trtllm-serve --help 2>/dev/null || true" \
+          python3 scripts/bench.py ".venv/bin/trtllm-serve --help" \
             --id tensorrt-llm --library TensorRT-LLM \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v${{ steps.version.outputs.v }}" \
