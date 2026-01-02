@@ -22,14 +22,15 @@ jobs:
           # Download Ubuntu x64 CPU build
           ASSET_URL="https://github.com/ggml-org/llama.cpp/releases/download/${TAG}/llama-${TAG}-bin-ubuntu-x64.tar.gz"
           curl -L -o llama.tar.gz "$ASSET_URL"
-          tar -xzf llama.tar.gz
-          chmod +x build/bin/*
+          mkdir -p llama-bin
+          tar -xzf llama.tar.gz -C llama-bin --strip-components=1
+          chmod +x llama-bin/*
 
       - name: Benchmark --help
         id: bench
         run: |
           start=$(date +%s%N)
-          ./build/bin/llama-cli --help > /dev/null
+          ./llama-bin/llama-cli --help > /dev/null
           end=$(date +%s%N)
           ms=$(( (end - start) / 1000000 ))
           echo "time_ms=$ms" >> $GITHUB_OUTPUT
