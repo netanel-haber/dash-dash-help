@@ -26,7 +26,6 @@ def build_row(*, row_id: str, command: str, library: str, time_ms: int,
         f'<td class="hide-mobile command-col"><code>{escape(command)}</code></td>'
         f'<td class="{css}"><a href="{run_url}">{time_ms}ms</a></td>'
         f'<td><a href="{version_url}">{escape(version)}</a></td>'
-        f'<td class="hide-mobile">-</td>'
         f'</tr>'
     )
 

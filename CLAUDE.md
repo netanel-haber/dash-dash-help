@@ -14,34 +14,33 @@ Goal: Make `--help` < 200ms. Tagline: "Let's help help help devs"
 
 ## Table Structure
 ```
-library | command | time | version | pr
+library | command | time | version
 ```
 - library: colloquial name for the library/tool
 - command: the actual CLI command benchmarked (e.g., `ollama --help`)
 - time: links to GitHub Actions run, class="ok" if <200ms, class="slow" if >=200ms
 - version: links to `github.com/{org}/{repo}/releases/tag/v{version}`
-- pr: for tracking fix PRs (future)
 
 ## Workflow Pattern
 Each tool has its own `.github/workflows/{tool}.yml` that:
 1. Installs the tool
 2. Gets version via `uv pip show` (Python) or tool-specific command
-3. Benchmarks `{tool} --help` using `date +%s%N` for nanosecond timing
-4. Checkouts repo
-5. Upserts row in index.html via sed (using `id="{tool}"` to find row)
-6. **IMPORTANT**: Must `git pull --rebase` before push to handle race conditions when multiple workflows run
-7. Commits with message `{tool}: {time}ms @ {version}`
+3. Runs `python3 work.py bench` which:
+   - Benchmarks `{tool} --help` using Python's `time.time_ns()`
+   - Upserts row in index.html (using `id="{tool}"` to find row)
+   - Commits with message `{tool}: {time}ms @ {version}`
+   - Handles `git pull --rebase` for race conditions
 
 ## Tools Status
-- **ollama**: ~13ms (Go binary, fast) ✓
-- **llama.cpp**: ~29ms (C++ binary, fast) ✓
-- **lm-eval**: ~51ms (Python, fast!) ✓
-- **hf**: ~823ms (Python)
-- **tensorrt-llm**: ~704ms (trtllm-serve --help)
-- **transformers**: ~7500ms (Python, slow)
-- **sglang**: ~11000ms (Python, requires CPU build from source)
-- **vllm**: ~14000ms (Python, requires CPU build from source)
-- **vlmeval**: ~19000ms (Python, use `ms-vlmeval` package not `vlmeval`)
+- **ollama**: ~14ms (Go binary, fast) ✓
+- **llama.cpp**: ~30ms (C++ binary, fast) ✓
+- **lm-eval**: ~49ms (Python, fast!) ✓
+- **hf**: ~860ms (Python)
+- **tensorrt-llm**: ~8200ms (trtllm-serve --help)
+- **transformers**: ~8600ms (Python, slow)
+- **sglang**: ~12000ms (Python, requires CPU build from source)
+- **vllm**: ~16000ms (Python, requires CPU build from source)
+- **vlmeval**: ~19400ms (Python, use `ms-vlmeval` package not `vlmeval`)
 
 ## Package Name Gotchas
 - **vlmeval**: Package is `ms-vlmeval` on PyPI, CLI is `vlmutil`
