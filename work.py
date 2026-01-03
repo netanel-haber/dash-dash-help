@@ -2,10 +2,12 @@
 """Benchmark CLI commands and manage index.html table."""
 
 import argparse
+import json
 import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from html import escape
 from pathlib import Path
@@ -17,14 +19,16 @@ def log(msg: str) -> None:
     print(f"[work] {msg}", file=sys.stderr, flush=True)
 
 
-def build_row(*, row_id: str, command: str, library: str, time_ms: int,
+def build_row(*, row_id: str, command: str, library: str, cold_ms: int, warm_ms: int,
               version: str, version_url: str, run_url: str) -> str:
-    css = "ok" if time_ms < 200 else "slow"
+    cold_css = "ok" if cold_ms < 200 else "slow"
+    warm_css = "ok" if warm_ms < 200 else "slow"
     return (
         f'<tr id="{row_id}">'
         f'<td>{escape(library)}</td>'
         f'<td class="hide-mobile command-col"><code>{escape(command)}</code></td>'
-        f'<td class="{css}"><a href="{run_url}">{time_ms}ms</a></td>'
+        f'<td class="{cold_css}"><a href="{run_url}">{cold_ms}ms</a></td>'
+        f'<td class="{warm_css}"><a href="{run_url}">{warm_ms}ms</a></td>'
         f'<td><a href="{version_url}">{escape(version)}</a></td>'
         f'</tr>'
     )
@@ -62,27 +66,63 @@ def git_commit_and_push(message: str) -> None:
     sys.exit("All push attempts failed!")
 
 
+def bench_cold(command: str) -> int:
+    """Run command once and return time in ms."""
+    log(f"Cold benchmark: {command}")
+    start = time.time_ns()
+    subprocess.run(command, shell=True, capture_output=True)
+    ms = (time.time_ns() - start) // 1_000_000
+    log(f"Cold: {ms}ms")
+    return ms
+
+
+def ensure_hyperfine() -> None:
+    """Install hyperfine if not already available."""
+    if subprocess.run(["which", "hyperfine"], capture_output=True).returncode == 0:
+        return
+    log("Installing hyperfine...")
+    subprocess.run(["sudo", "apt-get", "install", "-y", "hyperfine"], check=True)
+
+
+def bench_warm(command: str, runs: int = 20) -> int:
+    """Run hyperfine and return mean time in ms."""
+    ensure_hyperfine()
+    log(f"Warm benchmark: {command} ({runs} runs)")
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+        json_path = f.name
+
+    subprocess.run(
+        ["hyperfine", "--runs", str(runs), "--export-json", json_path, command],
+        check=True
+    )
+
+    with open(json_path) as f:
+        data = json.load(f)
+
+    ms = int(data["results"][0]["mean"] * 1000)
+    log(f"Warm: {ms}ms")
+    Path(json_path).unlink()
+    return ms
+
+
 def cmd_bench(args: argparse.Namespace) -> None:
     library = args.library or args.id
     log(f"=== {args.id}: {args.command} ===")
 
-    start = time.time_ns()
-    result = subprocess.run(args.command, shell=True, capture_output=True)
-    time_ms = (time.time_ns() - start) // 1_000_000
-
-    log(f"exit={result.returncode} time={time_ms}ms")
-    assert time_ms > 0, "0ms benchmark - command failed immediately"
+    cold_ms = bench_cold(args.command)
+    warm_ms = bench_warm(args.command)
 
     run_url = f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
 
     new_row = build_row(
-        row_id=args.id, command=args.command, library=library, time_ms=time_ms,
+        row_id=args.id, command=args.command, library=library,
+        cold_ms=cold_ms, warm_ms=warm_ms,
         version=args.version, version_url=args.version_url, run_url=run_url,
     )
     INDEX_HTML.write_text(update_row(INDEX_HTML.read_text(), args.id, new_row))
 
-    git_commit_and_push(f"{args.id}: {time_ms}ms @ {args.version}")
-    print(f"{args.command}: {time_ms}ms")
+    git_commit_and_push(f"{args.id}: {cold_ms}ms/{warm_ms}ms @ {args.version}")
+    print(f"{args.command}: cold={cold_ms}ms warm={warm_ms}ms")
 
 
 def cmd_sort(args: argparse.Namespace) -> None:
@@ -91,15 +131,17 @@ def cmd_sort(args: argparse.Namespace) -> None:
     rows = re.findall(r"<tr id=[^>]+>.*?</tr>", tbody.group(2), re.DOTALL)
     assert rows, "No rows"
 
-    def get_time(row: str) -> int:
-        return int(m.group(1)) if (m := re.search(r">(\d+)ms<", row)) else 0
+    def get_warm_time(row: str) -> int:
+        # Find all time values, return the second one (warm time)
+        times = re.findall(r">(\d+)ms<", row)
+        return int(times[1]) if len(times) >= 2 else 0
 
-    rows.sort(key=get_time, reverse=True)
+    rows.sort(key=get_warm_time, reverse=True)
     new_tbody = tbody.group(1) + "\n    " + "\n    ".join(rows) + "\n    " + tbody.group(3)
     INDEX_HTML.write_text(html[:tbody.start()] + new_tbody + html[tbody.end():])
 
-    git_commit_and_push("Sort table by time")
-    print("Sorted table by time (descending)")
+    git_commit_and_push("Sort table by warm time")
+    print("Sorted table by warm time (descending)")
 
 
 def main() -> None:
@@ -123,4 +165,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
