@@ -21,10 +21,18 @@ jobs:
       - name: Take screenshot
         run: npx playwright screenshot https://dashdashhelp.win screenshot.png
 
+      - name: Get timestamp
+        id: time
+        run: echo "stamp=$(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_OUTPUT
+
+      - name: Update README with timestamp
+        run: |
+          sed -i "s/Last updated: .*/Last updated: ${{ steps.time.outputs.stamp }}/" README.md
+
       - name: Commit and push
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add screenshot.png
-          git commit -m "update screenshot" || exit 0
+          git add screenshot.png README.md
+          git commit -m "update screenshot (${{ steps.time.outputs.stamp }})" || exit 0
           git push

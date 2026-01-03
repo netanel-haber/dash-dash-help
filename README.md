@@ -7,3 +7,5 @@ Let's help help help devs.
 https://dashdashhelp.win
 
 ![screenshot](screenshot.png)
+
+Last updated: pending first run
