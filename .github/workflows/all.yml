@@ -12,11 +12,20 @@ jobs:
       - name: Run benchmarks sequentially
         env:
           GH_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref_name }}
         run: |
           for workflow in ollama hf datasets llm openai langchain-cli llama-cpp lm-eval transformers tensorrt-llm sglang vllm vlmevalkit sort; do
-            echo "=== Running ${workflow} ==="
-            gh workflow run "${workflow}.yml" --repo ${{ github.repository }}
+            echo "=== Running ${workflow} on ${REF} ==="
+            gh workflow run "${workflow}.yml" \
+              --repo "${{ github.repository }}" \
+              --ref "${REF}"
             sleep 5
-            run_id=$(gh run list --workflow="${workflow}.yml" --repo ${{ github.repository }} --limit 1 --json databaseId -q '.[0].databaseId')
-            gh run watch "$run_id" --repo ${{ github.repository }} --exit-status || true
+            run_id=$(gh run list \
+              --workflow="${workflow}.yml" \
+              --repo "${{ github.repository }}" \
+              --branch "${REF}" \
+              --limit 1 \
+              --json databaseId \
+              -q '.[0].databaseId')
+            gh run watch "$run_id" --repo "${{ github.repository }}" --exit-status || true
           done
