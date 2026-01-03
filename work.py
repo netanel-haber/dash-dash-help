@@ -73,7 +73,7 @@ def git_commit_and_push(message: str) -> None:
     sys.exit("All push attempts failed!")
 
 
-def bench(command: str, runs: int = 21) -> tuple[int, int]:
+def bench(command: str, runs: int = 11) -> tuple[int, int]:
     """Run command multiple times and return (cold_ms, warm_ms)."""
     log(f"Benchmark: {command} ({runs} runs)")
     times: list[int] = []
