@@ -13,7 +13,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for workflow in ollama hf llama-cpp lm-eval transformers tensorrt-llm sglang vllm vlmevalkit sort; do
+          for workflow in ollama hf datasets llama-cpp lm-eval transformers tensorrt-llm sglang vllm vlmevalkit sort; do
             echo "=== Running ${workflow} ==="
             gh workflow run "${workflow}.yml" --repo ${{ github.repository }}
             sleep 5
