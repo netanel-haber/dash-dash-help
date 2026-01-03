@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
 
@@ -27,6 +28,7 @@ def build_row(
     version: str,
     version_url: str,
     run_url: str,
+    last_updated: str,
 ) -> str:
     cold_css = "ok" if cold_ms < 200 else "slow"
     warm_css = "ok" if warm_ms < 200 else "slow"
@@ -37,6 +39,7 @@ def build_row(
         f'<td class="{cold_css}"><a href="{run_url}">{cold_ms}ms</a></td>'
         f'<td class="{warm_css}"><a href="{run_url}">{warm_ms}ms</a></td>'
         f'<td><a href="{version_url}">{escape(version)}</a></td>'
+        f"<td>{escape(last_updated)}</td>"
         f"</tr>"
     )
 
@@ -97,6 +100,7 @@ def cmd_bench(args: argparse.Namespace) -> None:
     cold_ms, warm_ms = bench(args.command)
 
     run_url = f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
+    last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     new_row = build_row(
         row_id=args.id,
@@ -107,6 +111,7 @@ def cmd_bench(args: argparse.Namespace) -> None:
         version=args.version,
         version_url=args.version_url,
         run_url=run_url,
+        last_updated=last_updated,
     )
     INDEX_HTML.write_text(update_row(INDEX_HTML.read_text(), args.id, new_row))
     sort_table()
