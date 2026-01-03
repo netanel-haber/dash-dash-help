@@ -22,10 +22,10 @@ jobs:
         run: |
           TAG=$(gh api repos/sgl-project/sglang/releases/latest --jq '.tag_name')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          git clone --depth 1 --branch "$TAG" https://github.com/sgl-project/sglang.git /tmp/sglang
           uv venv --python 3.12
-          cd /tmp/sglang/python && cp pyproject_cpu.toml pyproject.toml
-          uv pip install --upgrade pip setuptools .
+          git clone --depth 1 --branch "$TAG" https://github.com/sgl-project/sglang.git /tmp/sglang
+          cp /tmp/sglang/python/pyproject_cpu.toml /tmp/sglang/python/pyproject.toml
+          uv pip install --upgrade pip setuptools /tmp/sglang/python
 
       - name: Benchmark and update
         env:
