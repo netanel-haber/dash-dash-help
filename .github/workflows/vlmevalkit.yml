@@ -15,19 +15,20 @@ jobs:
       - uses: astral-sh/setup-uv@v5
 
       - name: Install VLMEvalKit from source
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git clone --depth 1 https://github.com/open-compass/VLMEvalKit.git
+          TAG=$(gh api repos/open-compass/VLMEvalKit/releases/latest --jq '.tag_name')
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          git clone --depth 1 --branch "$TAG" https://github.com/open-compass/VLMEvalKit.git
           cd VLMEvalKit
           uv venv
           uv pip install -e .
-
-      - name: Get version
-        id: version
-        run: echo "v=$(cd VLMEvalKit && uv pip show vlmeval | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
 
       - name: Benchmark and update
         run: |
           python3 work.py bench "./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help" \
             --id VLMEvalKit --library VLMEvalKit \
-            --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/v${{ steps.version.outputs.v }}"
+            --version "${{ steps.version.outputs.tag }}" \
+            --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/${{ steps.version.outputs.tag }}"
