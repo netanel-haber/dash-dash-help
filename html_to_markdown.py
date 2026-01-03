@@ -3,6 +3,7 @@
 
 import re
 from datetime import datetime
+from pathlib import Path
 from markdownify import markdownify as md
 
 
@@ -28,8 +29,8 @@ def clean_markdown_table(markdown: str) -> str:
 
 def update_readme(markdown_table: str):
     """Update README.md with the markdown table."""
-    with open("README.md", "r") as f:
-        readme = f.read()
+    readme_path = Path("README.md")
+    readme = readme_path.read_text()
 
     timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
@@ -43,13 +44,11 @@ def update_readme(markdown_table: str):
             f"Last updated: {timestamp}\n"
         )
 
-        with open("README.md", "w") as f:
-            f.write(new_readme)
+        readme_path.write_text(new_readme)
 
 
 if __name__ == "__main__":
-    with open("index.html", "r") as f:
-        html_content = f.read()
+    html_content = Path("index.html").read_text()
 
     table_html = extract_table(html_content)
     markdown_table = md(table_html, heading_style="ATX")
