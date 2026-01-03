@@ -1,0 +1,31 @@
+name: langchain --help
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install langchain-cli
+        run: |
+          uv venv
+          uv pip install langchain-cli
+
+      - name: Get version
+        id: version
+        run: echo "v=$(uv pip show langchain-cli | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Benchmark and update
+        run: |
+          python3 work.py bench ".venv/bin/langchain --help" \
+            --id langchain-cli --library "LangChain CLI" \
+            --version "${{ steps.version.outputs.v }}" \
+            --version-url "https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==${{ steps.version.outputs.v }}"
