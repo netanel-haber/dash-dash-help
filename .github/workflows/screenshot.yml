@@ -1,0 +1,30 @@
+name: Update screenshot
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Playwright
+        run: |
+          npm install -D @playwright/test
+          npx playwright install chromium --with-deps
+
+      - name: Take screenshot
+        run: npx playwright screenshot https://dashdashhelp.win screenshot.png
+
+      - name: Commit and push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add screenshot.png
+          git commit -m "update screenshot" || exit 0
+          git push
