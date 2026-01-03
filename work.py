@@ -23,11 +23,11 @@ def build_row(*, row_id: str, command: str, library: str, time_ms: int,
     return (
         f'<tr id="{row_id}">'
         f'<td>{escape(library)}</td>'
-        f'<td><code>{escape(command)}</code></td>'
+        f'<td class="hide-mobile command-col"><code>{escape(command)}</code></td>'
         f'<td class="{css}"><a href="{run_url}">{time_ms}ms</a></td>'
         f'<td><a href="{version_url}">{escape(version)}</a></td>'
-        f'<td>{install}</td>'
-        f'<td>-</td>'
+        f'<td class="hide-mobile install-col">{install}</td>'
+        f'<td class="hide-mobile">-</td>'
         f'</tr>'
     )
 
