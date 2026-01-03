@@ -17,8 +17,8 @@ jobs:
       - name: Install tensorrt-llm
         run: |
           uv venv
-          uv pip install tensorrt-llm --no-deps || true
-          uv pip install click pynvml || true
+          uv pip install tensorrt-llm
+          uv pip install click pynvml
 
       - name: Get version
         id: version
