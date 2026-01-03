@@ -100,7 +100,7 @@ def cmd_bench(args: argparse.Namespace) -> None:
     cold_ms, warm_ms = bench(args.command)
 
     run_url = f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
-    last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     new_row = build_row(
         row_id=args.id,
