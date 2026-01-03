@@ -14,13 +14,12 @@ Goal: Make `--help` < 200ms. Tagline: "Let's help help help devs"
 
 ## Table Structure
 ```
-command | library | time | version | install | pr
+library | command | time | version | pr
 ```
-- command: the actual CLI command benchmarked (e.g., `ollama --help`)
 - library: colloquial name for the library/tool
+- command: the actual CLI command benchmarked (e.g., `ollama --help`)
 - time: links to GitHub Actions run, class="ok" if <200ms, class="slow" if >=200ms
 - version: links to `github.com/{org}/{repo}/releases/tag/v{version}`
-- install: how to install the tool
 - pr: for tracking fix PRs (future)
 
 ## Workflow Pattern

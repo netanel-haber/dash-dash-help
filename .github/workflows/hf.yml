@@ -28,5 +28,4 @@ jobs:
           python3 work.py bench ".venv/bin/hf --help" \
             --id hf --library "Hugging Face Hub" \
             --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/huggingface/huggingface_hub/releases/tag/v${{ steps.version.outputs.v }}" \
-            --install '<code>uv pip install huggingface_hub</code>'
+            --version-url "https://github.com/huggingface/huggingface_hub/releases/tag/v${{ steps.version.outputs.v }}"

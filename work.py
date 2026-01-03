@@ -18,7 +18,7 @@ def log(msg: str) -> None:
 
 
 def build_row(*, row_id: str, command: str, library: str, time_ms: int,
-              version: str, version_url: str, run_url: str, install: str) -> str:
+              version: str, version_url: str, run_url: str) -> str:
     css = "ok" if time_ms < 200 else "slow"
     return (
         f'<tr id="{row_id}">'
@@ -26,7 +26,6 @@ def build_row(*, row_id: str, command: str, library: str, time_ms: int,
         f'<td class="hide-mobile command-col"><code>{escape(command)}</code></td>'
         f'<td class="{css}"><a href="{run_url}">{time_ms}ms</a></td>'
         f'<td><a href="{version_url}">{escape(version)}</a></td>'
-        f'<td class="hide-mobile install-col">{install}</td>'
         f'<td class="hide-mobile">-</td>'
         f'</tr>'
     )
@@ -79,7 +78,7 @@ def cmd_bench(args: argparse.Namespace) -> None:
 
     new_row = build_row(
         row_id=args.id, command=args.command, library=library, time_ms=time_ms,
-        version=args.version, version_url=args.version_url, run_url=run_url, install=args.install,
+        version=args.version, version_url=args.version_url, run_url=run_url,
     )
     INDEX_HTML.write_text(update_row(INDEX_HTML.read_text(), args.id, new_row))
 
@@ -113,7 +112,6 @@ def main() -> None:
     bench.add_argument("--id", required=True)
     bench.add_argument("--version", required=True)
     bench.add_argument("--version-url", required=True)
-    bench.add_argument("--install", required=True)
     bench.add_argument("--library")
     bench.set_defaults(func=cmd_bench)
 

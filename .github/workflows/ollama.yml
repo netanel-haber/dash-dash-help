@@ -25,5 +25,4 @@ jobs:
           python3 work.py bench "ollama --help" \
             --id ollama --library Ollama \
             --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/ollama/ollama/releases/tag/v${{ steps.version.outputs.v }}" \
-            --install '<code>curl -fsSL https://ollama.com/install.sh | sh</code>'
+            --version-url "https://github.com/ollama/ollama/releases/tag/v${{ steps.version.outputs.v }}"
