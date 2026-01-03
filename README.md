@@ -7,7 +7,7 @@ Let's help help help devs.
 https://dashdashhelp.win
 
 | library | command | cold | warm (10 runs) | version |
-| ------- | ------- | ---- | -------------- | ------- |
+| --- | --- | --- | --- | --- |
 | VLLM | `.venv/bin/vllm --help` | [16110ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680594972) | [7436ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680594972) | [0.13.0+cpu](https://github.com/vllm-project/vllm/releases/tag/v0.13.0) |
 | VLMEvalKit | `./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help` | [13885ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680640100) | [5140ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680640100) | [v0.2](https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2) |
 | SGLang | `.venv/bin/python -m sglang.launch_server --help` | [11901ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680578863) | [4692ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680578863) | [v0.5.7](https://github.com/sgl-project/sglang/releases/tag/v0.5.7) |
@@ -22,4 +22,4 @@ https://dashdashhelp.win
 | llama.cpp | `./llama-bin/llama-cli --help` | [27ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680529801) | [19ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680529801) | [b7621](https://github.com/ggml-org/llama.cpp/releases/tag/b7621) |
 | Ollama | `ollama --help` | [13ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680481150) | [13ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/20680481150) | [0.13.5](https://github.com/ollama/ollama/releases/tag/v0.13.5) |
 
-Last updated: 2026-01-03 20:48 UTC
+Last updated: 2026-01-03 20:52 UTC

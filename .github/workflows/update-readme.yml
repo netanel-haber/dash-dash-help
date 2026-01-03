@@ -13,9 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install markdownify
+        run: uv pip install --system markdownify
 
       - name: Convert HTML table to markdown
         run: python3 html_to_markdown.py
