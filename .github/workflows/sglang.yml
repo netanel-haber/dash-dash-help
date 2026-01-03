@@ -18,22 +18,14 @@ jobs:
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
+          UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
         run: |
           TAG=$(gh api repos/sgl-project/sglang/releases/latest --jq '.tag_name')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          uv venv --python 3.12
-          VENV_PATH="${PWD}/.venv"
-          printf '%s\n' '[[index]]' 'name = "torch"' 'url = "https://download.pytorch.org/whl/cpu"' '' '[[index]]' 'name = "torchvision"' 'url = "https://download.pytorch.org/whl/cpu"' '' '[[index]]' 'name = "triton"' 'url = "https://download.pytorch.org/whl/cpu"' > ${VENV_PATH}/uv.toml
-          export UV_CONFIG_FILE="${VENV_PATH}/uv.toml"
           git clone --depth 1 --branch "$TAG" https://github.com/sgl-project/sglang.git /tmp/sglang
-          cd /tmp/sglang/python
-          cp pyproject_cpu.toml pyproject.toml
-          uv pip install --python ${VENV_PATH} --upgrade pip setuptools
-          uv pip install --python ${VENV_PATH} .
-          uv pip install --python ${VENV_PATH} torch==2.9.0 torchvision==0.24.0 triton==3.5.0 --force-reinstall
-          cd ../sgl-kernel
-          cp pyproject_cpu.toml pyproject.toml
-          uv pip install --python ${VENV_PATH} .
+          uv venv --python 3.12
+          cd /tmp/sglang/python && cp pyproject_cpu.toml pyproject.toml
+          uv pip install --upgrade pip setuptools .
 
       - name: Benchmark and update
         env:
