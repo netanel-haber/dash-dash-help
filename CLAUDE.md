@@ -25,7 +25,7 @@ library | command | time | version
 Each tool has its own `.github/workflows/{tool}.yml` that:
 1. Installs the tool
 2. Gets version via `uv pip show` (Python) or tool-specific command
-3. Runs `python3 work.py bench` which:
+3. Runs `python3 work.py` which:
    - Benchmarks `{tool} --help` using Python's `time.time_ns()`
    - Upserts row in index.html (using `id="{tool}"` to find row)
    - Commits with message `{tool}: {time}ms @ {version}`

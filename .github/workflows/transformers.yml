@@ -25,7 +25,7 @@ jobs:
 
       - name: Benchmark and update
         run: |
-          python3 work.py bench ".venv/bin/transformers-cli --help" \
+          python3 work.py ".venv/bin/transformers-cli --help" \
             --id transformers --library Transformers \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/huggingface/transformers/releases/tag/v${{ steps.version.outputs.v }}"

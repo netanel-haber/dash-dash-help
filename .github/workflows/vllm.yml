@@ -29,7 +29,7 @@ jobs:
 
       - name: Benchmark and update
         run: |
-          python3 work.py bench ".venv/bin/vllm --help" \
+          python3 work.py ".venv/bin/vllm --help" \
             --id vllm --library VLLM \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/vllm-project/vllm/releases/tag/${{ steps.version.outputs.tag }}"

@@ -109,12 +109,14 @@ def cmd_bench(args: argparse.Namespace) -> None:
         run_url=run_url,
     )
     INDEX_HTML.write_text(update_row(INDEX_HTML.read_text(), args.id, new_row))
+    sort_table()
 
     git_commit_and_push(f"{args.id}: {cold_ms}ms/{warm_ms}ms @ {args.version}")
     print(f"{args.command}: cold={cold_ms}ms warm={warm_ms}ms")
 
 
-def cmd_sort(args: argparse.Namespace) -> None:
+def sort_table() -> None:
+    """Sort table rows by warm time (descending)."""
     html = INDEX_HTML.read_text()
     assert (tbody := re.search(r"(<tbody>)(.*?)(</tbody>)", html, re.DOTALL)), (
         "No tbody"
@@ -132,28 +134,17 @@ def cmd_sort(args: argparse.Namespace) -> None:
         tbody.group(1) + "\n    " + "\n    ".join(rows) + "\n    " + tbody.group(3)
     )
     INDEX_HTML.write_text(html[: tbody.start()] + new_tbody + html[tbody.end() :])
-
-    git_commit_and_push("Sort table by warm time")
-    print("Sorted table by warm time (descending)")
+    log("Sorted table by warm time")
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    sub = p.add_subparsers(required=True)
-
-    bench = sub.add_parser("bench")
-    bench.add_argument("command")
-    bench.add_argument("--id", required=True)
-    bench.add_argument("--version", required=True)
-    bench.add_argument("--version-url", required=True)
-    bench.add_argument("--library")
-    bench.set_defaults(func=cmd_bench)
-
-    sort = sub.add_parser("sort-html-table")
-    sort.set_defaults(func=cmd_sort)
-
-    args = p.parse_args()
-    args.func(args)
+    p.add_argument("command")
+    p.add_argument("--id", required=True)
+    p.add_argument("--version", required=True)
+    p.add_argument("--version-url", required=True)
+    p.add_argument("--library")
+    cmd_bench(p.parse_args())
 
 
 if __name__ == "__main__":

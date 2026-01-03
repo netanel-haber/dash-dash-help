@@ -22,7 +22,7 @@ jobs:
 
       - name: Benchmark and update
         run: |
-          python3 work.py bench "ollama --help" \
+          python3 work.py "ollama --help" \
             --id ollama --library Ollama \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/ollama/ollama/releases/tag/v${{ steps.version.outputs.v }}"

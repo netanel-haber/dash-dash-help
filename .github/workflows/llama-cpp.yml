@@ -24,7 +24,7 @@ jobs:
 
       - name: Benchmark and update
         run: |
-          python3 work.py bench "./llama-bin/llama-cli --help" \
+          python3 work.py "./llama-bin/llama-cli --help" \
             --id llama.cpp --library llama.cpp \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/ggml-org/llama.cpp/releases/tag/${{ steps.version.outputs.v }}"
