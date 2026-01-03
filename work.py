@@ -85,7 +85,7 @@ def bench(command: str, runs: int = 11) -> tuple[int, int]:
         log(f"  Run {i + 1}/{runs}: {ms}ms")
 
     cold_ms = times[0]
-    warm_ms = sum(times) // len(times)
+    warm_ms = sum(times[1:]) // (len(times) - 1)
     log(f"Cold: {cold_ms}ms, Warm: {warm_ms}ms")
     return cold_ms, warm_ms
 
@@ -112,7 +112,6 @@ def cmd_bench(args: argparse.Namespace) -> None:
     sort_table()
 
     git_commit_and_push(f"{args.id}: {cold_ms}ms/{warm_ms}ms @ {args.version}")
-    print(f"{args.command}: cold={cold_ms}ms warm={warm_ms}ms")
 
 
 def sort_table() -> None:
