@@ -1,0 +1,31 @@
+name: vllm experimental (python -m vllm.hello)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install vllm from specific commit
+        id: version
+        run: |
+          uv venv
+          VLLM_TARGET_DEVICE=cpu VLLM_USE_PRECOMPILED=1 uv pip install "vllm @ git+https://github.com/netanel-haber/vllm.git@5ad66432cc94a0465fad88979b06d59ffb069adc" \
+            --index-strategy unsafe-best-match \
+            --extra-index-url https://download.pytorch.org/whl/cpu
+          echo "v=$(uv pip show vllm | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+          echo "commit=5ad66432cc94a0465fad88979b06d59ffb069adc" >> $GITHUB_OUTPUT
+
+      - name: Benchmark (dry run)
+        run: |
+          python3 work.py "python3 -m vllm.hello" \
+            --id vllm-experimental --library "VLLM (experimental)" \
+            --version "${{ steps.version.outputs.v }}" \
+            --version-url "https://github.com/netanel-haber/vllm/commit/${{ steps.version.outputs.commit }}" \
+            --dry-run

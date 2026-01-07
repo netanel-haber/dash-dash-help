@@ -99,6 +99,11 @@ def cmd_bench(args: argparse.Namespace) -> None:
 
     cold_ms, warm_ms = bench(args.command)
 
+    if args.dry_run:
+        log(f"DRY RUN: {args.id} - Cold: {cold_ms}ms, Warm: {warm_ms}ms")
+        log("Skipping HTML update and commit")
+        return
+
     run_url = f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
     last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
 
@@ -148,6 +153,7 @@ def main() -> None:
     p.add_argument("--version", required=True)
     p.add_argument("--version-url", required=True)
     p.add_argument("--library")
+    p.add_argument("--dry-run", action="store_true", help="Run benchmark without updating HTML or committing")
     cmd_bench(p.parse_args())
 
 
