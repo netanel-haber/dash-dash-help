@@ -25,7 +25,7 @@ jobs:
       - name: Benchmark (dry run)
         run: |
           python3 work.py "python3 -m vllm.hello" \
-            --id vllm-experimental --library "VLLM (experimental)" \
+            --library vllm-experimental \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/netanel-haber/vllm/commit/${{ steps.version.outputs.commit }}" \
             --dry-run

@@ -24,6 +24,6 @@ jobs:
       - name: Benchmark and update
         run: |
           python3 work.py ".venv/bin/openai --help" \
-            --id openai --library "OpenAI" \
+            --library openai \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/openai/openai-python/releases/tag/v${{ steps.version.outputs.v }}"

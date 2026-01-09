@@ -30,6 +30,6 @@ jobs:
           SGLANG_USE_CPU_ENGINE: "1"
         run: |
           python3 work.py ".venv/bin/python -m sglang.launch_server --help" \
-            --id sglang --library SGLang \
+            --library sglang \
             --version "${{ steps.version.outputs.tag }}" \
             --version-url "https://github.com/sgl-project/sglang/releases/tag/${{ steps.version.outputs.tag }}"
