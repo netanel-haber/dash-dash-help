@@ -13,16 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Create venv and install markdownify
-        run: |
-          uv venv
-          uv pip install markdownify
-
-      - name: Convert HTML table to markdown
-        run: uv run python html_to_markdown.py
+      - name: Convert CSV to markdown
+        run: python update_readme.py
 
       - name: Get timestamp
         id: time
