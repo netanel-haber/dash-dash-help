@@ -64,18 +64,18 @@ def upsert_measurement(measurement: dict) -> None:
     measurements = read_measurements()
 
     # Update existing or append new
-    row_id = measurement["id"]
+    id = measurement["id"]
     found = False
     for i, m in enumerate(measurements):
-        if m["id"] == row_id:
+        if m["id"] == id:
             measurements[i] = measurement
             found = True
-            log(f"Updated measurement for {row_id}")
+            log(f"Updated measurement for {id}")
             break
 
     if not found:
         measurements.append(measurement)
-        log(f"Added new measurement for {row_id}")
+        log(f"Added new measurement for {id}")
 
     write_measurements(measurements)
 
