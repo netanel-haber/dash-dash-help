@@ -14,34 +14,26 @@ from pathlib import Path
 
 INDEX_HTML = Path(__file__).parent / "index.html"
 MEASUREMENTS_CSV = Path(__file__).parent / "measurements.csv"
+FIELDS = ["id", "library", "command", "cold_ms", "warm_ms", "version", "version_url", "run_url", "last_updated"]
 
 
 def log(msg: str) -> None:
     print(f"[work] {msg}", file=sys.stderr, flush=True)
 
 
-def build_row(
-    *,
-    row_id: str,
-    command: str,
-    library: str,
-    cold_ms: int,
-    warm_ms: int,
-    version: str,
-    version_url: str,
-    run_url: str,
-    last_updated: str,
-) -> str:
+def build_row(m: dict) -> str:
+    cold_ms = int(m["cold_ms"])
+    warm_ms = int(m["warm_ms"])
     cold_css = "ok" if cold_ms < 200 else "slow"
     warm_css = "ok" if warm_ms < 200 else "slow"
     return (
-        f'<tr id="{row_id}">'
-        f"<td>{escape(library)}</td>"
-        f'<td class="hide-mobile command-col"><code>{escape(command)}</code></td>'
-        f'<td class="{cold_css}"><a href="{run_url}">{cold_ms}ms</a></td>'
-        f'<td class="{warm_css}"><a href="{run_url}">{warm_ms}ms</a></td>'
-        f'<td><a href="{version_url}">{escape(version)}</a></td>'
-        f"<td>{escape(last_updated)}</td>"
+        f'<tr id="{m["id"]}">'
+        f"<td>{escape(m['library'])}</td>"
+        f'<td class="hide-mobile command-col"><code>{escape(m["command"])}</code></td>'
+        f'<td class="{cold_css}"><a href="{m["run_url"]}">{cold_ms}ms</a></td>'
+        f'<td class="{warm_css}"><a href="{m["run_url"]}">{warm_ms}ms</a></td>'
+        f'<td><a href="{m["version_url"]}">{escape(m["version"])}</a></td>'
+        f"<td>{escape(m['last_updated'])}</td>"
         f"</tr>"
     )
 
@@ -60,52 +52,29 @@ def write_measurements(measurements: list[dict]) -> None:
     if not measurements:
         return
 
-    fieldnames = ["id", "library", "command", "cold_ms", "warm_ms", "version", "version_url", "run_url", "last_updated"]
     with open(MEASUREMENTS_CSV, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=FIELDS)
         writer.writeheader()
         writer.writerows(measurements)
     log(f"Wrote {len(measurements)} measurements to {MEASUREMENTS_CSV}")
 
 
-def upsert_measurement(
-    *,
-    row_id: str,
-    command: str,
-    library: str,
-    cold_ms: int,
-    warm_ms: int,
-    version: str,
-    version_url: str,
-    run_url: str,
-    last_updated: str,
-) -> None:
+def upsert_measurement(measurement: dict) -> None:
     """Upsert measurement to CSV."""
     measurements = read_measurements()
 
-    new_row = {
-        "id": row_id,
-        "library": library,
-        "command": command,
-        "cold_ms": str(cold_ms),
-        "warm_ms": str(warm_ms),
-        "version": version,
-        "version_url": version_url,
-        "run_url": run_url,
-        "last_updated": last_updated,
-    }
-
     # Update existing or append new
+    row_id = measurement["id"]
     found = False
     for i, m in enumerate(measurements):
         if m["id"] == row_id:
-            measurements[i] = new_row
+            measurements[i] = measurement
             found = True
             log(f"Updated measurement for {row_id}")
             break
 
     if not found:
-        measurements.append(new_row)
+        measurements.append(measurement)
         log(f"Added new measurement for {row_id}")
 
     write_measurements(measurements)
@@ -119,22 +88,7 @@ def rebuild_html() -> None:
     measurements.sort(key=lambda m: int(m["warm_ms"]), reverse=True)
 
     # Build table rows
-    rows = []
-    for m in measurements:
-        cold_ms = int(m["cold_ms"])
-        warm_ms = int(m["warm_ms"])
-        row = build_row(
-            row_id=m["id"],
-            command=m["command"],
-            library=m["library"],
-            cold_ms=cold_ms,
-            warm_ms=warm_ms,
-            version=m["version"],
-            version_url=m["version_url"],
-            run_url=m["run_url"],
-            last_updated=m["last_updated"],
-        )
-        rows.append(row)
+    rows = [build_row(m) for m in measurements]
 
     # Read current HTML
     html = INDEX_HTML.read_text()
@@ -209,17 +163,18 @@ def cmd_bench(args: argparse.Namespace) -> None:
     last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
 
     # Upsert measurement to CSV
-    upsert_measurement(
-        row_id=args.id,
-        command=args.command,
-        library=library,
-        cold_ms=cold_ms,
-        warm_ms=warm_ms,
-        version=args.version,
-        version_url=args.version_url,
-        run_url=run_url,
-        last_updated=last_updated,
-    )
+    measurement = {
+        "id": args.id,
+        "library": library,
+        "command": args.command,
+        "cold_ms": str(cold_ms),
+        "warm_ms": str(warm_ms),
+        "version": args.version,
+        "version_url": args.version_url,
+        "run_url": run_url,
+        "last_updated": last_updated,
+    }
+    upsert_measurement(measurement)
 
     # Rebuild entire HTML from CSV
     rebuild_html()
