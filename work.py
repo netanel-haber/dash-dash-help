@@ -2,6 +2,7 @@
 """Benchmark CLI commands and manage index.html table."""
 
 import argparse
+import csv
 import os
 import re
 import subprocess
@@ -12,6 +13,7 @@ from html import escape
 from pathlib import Path
 
 INDEX_HTML = Path(__file__).parent / "index.html"
+MEASUREMENTS_CSV = Path(__file__).parent / "measurements.csv"
 
 
 def log(msg: str) -> None:
@@ -44,10 +46,109 @@ def build_row(
     )
 
 
-def update_row(html: str, row_id: str, new_row: str) -> str:
-    pattern = rf'<tr id="{re.escape(row_id)}"[^>]*>.*?</tr>'
-    assert (m := re.search(pattern, html, re.DOTALL)), f"Row '{row_id}' not found"
-    return html[: m.start()] + new_row + html[m.end() :]
+def read_measurements() -> list[dict]:
+    """Read all measurements from CSV."""
+    if not MEASUREMENTS_CSV.exists():
+        return []
+
+    with open(MEASUREMENTS_CSV, "r", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def write_measurements(measurements: list[dict]) -> None:
+    """Write all measurements to CSV."""
+    if not measurements:
+        return
+
+    fieldnames = ["id", "library", "command", "cold_ms", "warm_ms", "version", "version_url", "run_url", "last_updated"]
+    with open(MEASUREMENTS_CSV, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(measurements)
+    log(f"Wrote {len(measurements)} measurements to {MEASUREMENTS_CSV}")
+
+
+def upsert_measurement(
+    *,
+    row_id: str,
+    command: str,
+    library: str,
+    cold_ms: int,
+    warm_ms: int,
+    version: str,
+    version_url: str,
+    run_url: str,
+    last_updated: str,
+) -> None:
+    """Upsert measurement to CSV."""
+    measurements = read_measurements()
+
+    new_row = {
+        "id": row_id,
+        "library": library,
+        "command": command,
+        "cold_ms": str(cold_ms),
+        "warm_ms": str(warm_ms),
+        "version": version,
+        "version_url": version_url,
+        "run_url": run_url,
+        "last_updated": last_updated,
+    }
+
+    # Update existing or append new
+    found = False
+    for i, m in enumerate(measurements):
+        if m["id"] == row_id:
+            measurements[i] = new_row
+            found = True
+            log(f"Updated measurement for {row_id}")
+            break
+
+    if not found:
+        measurements.append(new_row)
+        log(f"Added new measurement for {row_id}")
+
+    write_measurements(measurements)
+
+
+def rebuild_html() -> None:
+    """Rebuild index.html from measurements.csv."""
+    measurements = read_measurements()
+
+    # Sort by warm time (descending)
+    measurements.sort(key=lambda m: int(m["warm_ms"]), reverse=True)
+
+    # Build table rows
+    rows = []
+    for m in measurements:
+        cold_ms = int(m["cold_ms"])
+        warm_ms = int(m["warm_ms"])
+        row = build_row(
+            row_id=m["id"],
+            command=m["command"],
+            library=m["library"],
+            cold_ms=cold_ms,
+            warm_ms=warm_ms,
+            version=m["version"],
+            version_url=m["version_url"],
+            run_url=m["run_url"],
+            last_updated=m["last_updated"],
+        )
+        rows.append(row)
+
+    # Read current HTML
+    html = INDEX_HTML.read_text()
+
+    # Replace tbody content
+    tbody_pattern = r"(<tbody>).*?(</tbody>)"
+    tbody_match = re.search(tbody_pattern, html, re.DOTALL)
+    assert tbody_match, "No tbody found in index.html"
+
+    new_tbody = tbody_match.group(1) + "\n    " + "\n    ".join(rows) + "\n    " + tbody_match.group(2)
+    new_html = html[:tbody_match.start()] + new_tbody + html[tbody_match.end():]
+
+    INDEX_HTML.write_text(new_html)
+    log(f"Rebuilt index.html from {len(measurements)} measurements")
 
 
 def git(cmd: str, check: bool = True) -> int:
@@ -58,7 +159,7 @@ def git(cmd: str, check: bool = True) -> int:
 def git_commit_and_push(message: str) -> None:
     git("config user.name 'github-actions[bot]'")
     git("config user.email 'github-actions[bot]@users.noreply.github.com'")
-    git("add index.html")
+    git("add measurements.csv index.html")
 
     if git("diff --staged --quiet", check=False) == 0:
         log("No changes to commit")
@@ -101,13 +202,14 @@ def cmd_bench(args: argparse.Namespace) -> None:
 
     if args.dry_run:
         log(f"DRY RUN: {args.id} - Cold: {cold_ms}ms, Warm: {warm_ms}ms")
-        log("Skipping HTML update and commit")
+        log("Skipping CSV/HTML update and commit")
         return
 
     run_url = f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
     last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
 
-    new_row = build_row(
+    # Upsert measurement to CSV
+    upsert_measurement(
         row_id=args.id,
         command=args.command,
         library=library,
@@ -118,32 +220,11 @@ def cmd_bench(args: argparse.Namespace) -> None:
         run_url=run_url,
         last_updated=last_updated,
     )
-    INDEX_HTML.write_text(update_row(INDEX_HTML.read_text(), args.id, new_row))
-    sort_table()
+
+    # Rebuild entire HTML from CSV
+    rebuild_html()
 
     git_commit_and_push(f"{args.id}: {cold_ms}ms/{warm_ms}ms @ {args.version}")
-
-
-def sort_table() -> None:
-    """Sort table rows by warm time (descending)."""
-    html = INDEX_HTML.read_text()
-    assert (tbody := re.search(r"(<tbody>)(.*?)(</tbody>)", html, re.DOTALL)), (
-        "No tbody"
-    )
-    rows = re.findall(r"<tr id=[^>]+>.*?</tr>", tbody.group(2), re.DOTALL)
-    assert rows, "No rows"
-
-    def get_warm_time(row: str) -> int:
-        # Find all time values, return the second one (warm time)
-        times = re.findall(r">(\d+)ms<", row)
-        return int(times[1]) if len(times) >= 2 else 0
-
-    rows.sort(key=get_warm_time, reverse=True)
-    new_tbody = (
-        tbody.group(1) + "\n    " + "\n    ".join(rows) + "\n    " + tbody.group(3)
-    )
-    INDEX_HTML.write_text(html[: tbody.start()] + new_tbody + html[tbody.end() :])
-    log("Sorted table by warm time")
 
 
 def main() -> None:
