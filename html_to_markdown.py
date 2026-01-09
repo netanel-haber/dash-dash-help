@@ -10,11 +10,7 @@ from markdownify import markdownify as md
 def extract_table(html_content: str) -> str:
     """Extract the benchmark table from HTML."""
     # Find the table with id="bench"
-    match = re.search(
-        r'<table id="bench">.*?</table>',
-        html_content,
-        re.DOTALL
-    )
+    match = re.search(r'<table id="bench">.*?</table>', html_content, re.DOTALL)
     if not match:
         raise ValueError("Could not find table with id='bench'")
     return match.group(0)
@@ -23,8 +19,8 @@ def extract_table(html_content: str) -> str:
 def clean_markdown_table(markdown: str) -> str:
     """Clean up the markdown table."""
     # Remove extra whitespace and clean up formatting
-    lines = [line.strip() for line in markdown.strip().split('\n') if line.strip()]
-    return '\n'.join(lines)
+    lines = [line.strip() for line in markdown.strip().split("\n") if line.strip()]
+    return "\n".join(lines)
 
 
 def update_readme(markdown_table: str):
@@ -38,10 +34,11 @@ def update_readme(markdown_table: str):
     parts = readme.split("https://dashdashhelp.win\n")
     if len(parts) == 2:
         new_readme = (
-            parts[0] +
-            "https://dashdashhelp.win\n\n" +
-            markdown_table + "\n\n" +
-            f"Last updated: {timestamp}\n"
+            parts[0]
+            + "https://dashdashhelp.win\n\n"
+            + markdown_table
+            + "\n\n"
+            + f"Last updated: {timestamp}\n"
         )
 
         readme_path.write_text(new_readme)

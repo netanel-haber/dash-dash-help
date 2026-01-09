@@ -24,6 +24,6 @@ jobs:
       - name: Benchmark and update
         run: |
           python3 work.py ".venv/bin/lm-eval --help" \
-            --id lm-eval --library lm-eval \
+            --library lm-eval \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v${{ steps.version.outputs.v }}"

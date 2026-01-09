@@ -27,6 +27,6 @@ jobs:
       - name: Benchmark and update
         run: |
           python3 work.py "./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help" \
-            --id VLMEvalKit --library VLMEvalKit \
+            --library VLMEvalKit \
             --version "${{ steps.version.outputs.tag }}" \
             --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/${{ steps.version.outputs.tag }}"

@@ -24,6 +24,6 @@ jobs:
       - name: Benchmark and update
         run: |
           python3 work.py ".venv/bin/datasets-cli --help" \
-            --id datasets --library "Datasets" \
+            --library datasets \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/huggingface/datasets/releases/tag/${{ steps.version.outputs.v }}"

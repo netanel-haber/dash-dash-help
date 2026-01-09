@@ -18,15 +18,9 @@
       font-size: 1.2em;
     }
 
-    .table-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
     table {
       border-collapse: collapse;
       width: 100%;
-      min-width: 600px;
     }
 
     th,
@@ -34,10 +28,6 @@
       text-align: left;
       padding: 0.3em 0.5em;
       border-bottom: 1px solid #ccc;
-    }
-
-    .command-col code {
-      word-break: break-all;
     }
 
     .slow {
@@ -65,55 +55,6 @@
     .gh-link svg {
       width: 20px;
       height: 20px;
-    }
-
-    @media (max-width: 768px) {
-      body {
-        margin: 1em auto;
-        padding: 0 0.5em;
-        font-size: 0.9em;
-      }
-
-      h1 {
-        font-size: 1.1em;
-      }
-
-      th,
-      td {
-        padding: 0.25em 0.4em;
-      }
-
-      table {
-        min-width: 550px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      body {
-        font-size: 0.85em;
-      }
-
-      h1 {
-        font-size: 1em;
-      }
-
-      th,
-      td {
-        padding: 0.2em 0.3em;
-      }
-
-      .header {
-        gap: 0.5em;
-      }
-
-      .gh-link svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      .hide-mobile {
-        display: none;
-      }
     }
 
     @media (prefers-color-scheme: dark) {
@@ -151,12 +92,10 @@
   <p>Let's help help help devs.</p>
   <p>Target: &lt;200ms. Several important LLM CLI tools take multiple seconds. PRs welcome ❤️</p>
 
-  <div class="table-wrap">
     <table id="bench">
       <thead>
         <tr>
           <th scope="col">library</th>
-          <th scope="col" class="hide-mobile command-col">command</th>
           <th scope="col">cold</th>
           <th scope="col">warm (10 runs)</th>
           <th scope="col">version</th>
@@ -164,22 +103,21 @@
         </tr>
       </thead>
       <tbody>
-    <tr id="vllm"><td>VLLM</td><td class="hide-mobile command-col"><code>.venv/bin/vllm --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701588348">16282ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701588348">7562ms</a></td><td><a href="https://github.com/vllm-project/vllm/releases/tag/v0.13.0">0.13.0+cpu</a></td><td>2026-01-05T00:36Z</td></tr>
-    <tr id="sglang"><td>SGLang</td><td class="hide-mobile command-col"><code>.venv/bin/python -m sglang.launch_server --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701236663">13875ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701236663">5490ms</a></td><td><a href="https://github.com/sgl-project/sglang/releases/tag/v0.5.7">v0.5.7</a></td><td>2026-01-05T00:09Z</td></tr>
-    <tr id="VLMEvalKit"><td>VLMEvalKit</td><td class="hide-mobile command-col"><code>./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701504064">14551ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701504064">4990ms</a></td><td><a href="https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2">v0.2</a></td><td>2026-01-05T00:28Z</td></tr>
-    <tr id="transformers"><td>Transformers</td><td class="hide-mobile command-col"><code>.venv/bin/transformers-cli --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701454944">8799ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701454944">3102ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v4.57.3">4.57.3</a></td><td>2026-01-05T00:23Z</td></tr>
-    <tr id="tensorrt-llm"><td>TensorRT-LLM</td><td class="hide-mobile command-col"><code>.venv/bin/trtllm-serve --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701139723">8208ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701139723">2372ms</a></td><td><a href="https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.0.0">1.0.0</a></td><td>2026-01-05T00:04Z</td></tr>
-    <tr id="datasets"><td>Datasets</td><td class="hide-mobile command-col"><code>.venv/bin/datasets-cli --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701433178">3351ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701433178">842ms</a></td><td><a href="https://github.com/huggingface/datasets/releases/tag/4.4.2">4.4.2</a></td><td>2026-01-05T00:21Z</td></tr>
-    <tr id="llm"><td>LLM</td><td class="hide-mobile command-col"><code>.venv/bin/llm --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701415200">1377ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701415200">557ms</a></td><td><a href="https://github.com/simonw/llm/releases/tag/0.28">0.28</a></td><td>2026-01-05T00:20Z</td></tr>
-    <tr id="openai"><td>OpenAI</td><td class="hide-mobile command-col"><code>.venv/bin/openai --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701282803">1591ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701282803">505ms</a></td><td><a href="https://github.com/openai/openai-python/releases/tag/v2.14.0">2.14.0</a></td><td>2026-01-05T00:11Z</td></tr>
-    <tr id="langchain-cli"><td>LangChain CLI</td><td class="hide-mobile command-col"><code>.venv/bin/langchain --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701163240">749ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701163240">253ms</a></td><td><a href="https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37">0.0.37</a></td><td>2026-01-05T00:03Z</td></tr>
-    <tr id="hf"><td>Hugging Face Hub</td><td class="hide-mobile command-col"><code>.venv/bin/hf --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701326540">805ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701326540">218ms</a></td><td><a href="https://github.com/huggingface/huggingface_hub/releases/tag/v1.2.3">1.2.3</a></td><td>2026-01-05T00:14Z</td></tr>
-    <tr id="lm-eval"><td>lm-eval</td><td class="hide-mobile command-col"><code>.venv/bin/lm-eval --help</code></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701238026">49ms</a></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701238026">43ms</a></td><td><a href="https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.9.2">0.4.9.2</a></td><td>2026-01-05T00:08Z</td></tr>
-    <tr id="llama.cpp"><td>llama.cpp</td><td class="hide-mobile command-col"><code>./llama-bin/llama-cli --help</code></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701304257">26ms</a></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701304257">17ms</a></td><td><a href="https://github.com/ggml-org/llama.cpp/releases/tag/b7626">b7626</a></td><td>2026-01-05T00:12Z</td></tr>
-    <tr id="ollama"><td>Ollama</td><td class="hide-mobile command-col"><code>ollama --help</code></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701545085">14ms</a></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701545085">14ms</a></td><td><a href="https://github.com/ollama/ollama/releases/tag/v0.13.5">0.13.5</a></td><td>2026-01-05T00:30Z</td></tr>
+    <tr id="vllm"><td><code>vllm --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701588348">16282ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701588348">7562ms</a></td><td><a href="https://github.com/vllm-project/vllm/releases/tag/v0.13.0">0.13.0+cpu</a></td><td>2026-01-05T00:36Z</td></tr>
+    <tr id="sglang"><td><code>sglang --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701236663">13875ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701236663">5490ms</a></td><td><a href="https://github.com/sgl-project/sglang/releases/tag/v0.5.7">v0.5.7</a></td><td>2026-01-05T00:09Z</td></tr>
+    <tr id="VLMEvalKit"><td><code>VLMEvalKit --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701504064">14551ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701504064">4990ms</a></td><td><a href="https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2">v0.2</a></td><td>2026-01-05T00:28Z</td></tr>
+    <tr id="transformers"><td><code>transformers --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701454944">8799ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701454944">3102ms</a></td><td><a href="https://github.com/huggingface/transformers/releases/tag/v4.57.3">4.57.3</a></td><td>2026-01-05T00:23Z</td></tr>
+    <tr id="tensorrt-llm"><td><code>tensorrt-llm --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701139723">8208ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701139723">2372ms</a></td><td><a href="https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.0.0">1.0.0</a></td><td>2026-01-05T00:04Z</td></tr>
+    <tr id="datasets"><td><code>datasets --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701433178">3351ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701433178">842ms</a></td><td><a href="https://github.com/huggingface/datasets/releases/tag/4.4.2">4.4.2</a></td><td>2026-01-05T00:21Z</td></tr>
+    <tr id="llm"><td><code>llm --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701415200">1377ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701415200">557ms</a></td><td><a href="https://github.com/simonw/llm/releases/tag/0.28">0.28</a></td><td>2026-01-05T00:20Z</td></tr>
+    <tr id="openai"><td><code>openai --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701282803">1591ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701282803">505ms</a></td><td><a href="https://github.com/openai/openai-python/releases/tag/v2.14.0">2.14.0</a></td><td>2026-01-05T00:11Z</td></tr>
+    <tr id="langchain-cli"><td><code>langchain-cli --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701163240">749ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701163240">253ms</a></td><td><a href="https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37">0.0.37</a></td><td>2026-01-05T00:03Z</td></tr>
+    <tr id="hf"><td><code>hf --help</code></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701326540">805ms</a></td><td class="slow"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701326540">218ms</a></td><td><a href="https://github.com/huggingface/huggingface_hub/releases/tag/v1.2.3">1.2.3</a></td><td>2026-01-05T00:14Z</td></tr>
+    <tr id="lm-eval"><td><code>lm-eval --help</code></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701238026">49ms</a></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701238026">43ms</a></td><td><a href="https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.9.2">0.4.9.2</a></td><td>2026-01-05T00:08Z</td></tr>
+    <tr id="llama.cpp"><td><code>llama.cpp --help</code></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701304257">26ms</a></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701304257">17ms</a></td><td><a href="https://github.com/ggml-org/llama.cpp/releases/tag/b7626">b7626</a></td><td>2026-01-05T00:12Z</td></tr>
+    <tr id="ollama"><td><code>ollama --help</code></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701545085">14ms</a></td><td class="ok"><a href="https://github.com/netanel-haber/dash-dash-help/actions/runs/20701545085">14ms</a></td><td><a href="https://github.com/ollama/ollama/releases/tag/v0.13.5">0.13.5</a></td><td>2026-01-05T00:30Z</td></tr>
     </tbody>
     </table>
-  </div>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "85aa7ee85cef4a94b503ebe65380d921"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 

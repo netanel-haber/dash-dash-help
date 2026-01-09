@@ -24,6 +24,6 @@ jobs:
       - name: Benchmark and update
         run: |
           python3 work.py ".venv/bin/llm --help" \
-            --id llm --library "LLM" \
+            --library llm \
             --version "${{ steps.version.outputs.v }}" \
             --version-url "https://github.com/simonw/llm/releases/tag/${{ steps.version.outputs.v }}"
