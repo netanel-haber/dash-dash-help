@@ -163,17 +163,10 @@ def cmd_bench(args: argparse.Namespace) -> None:
     last_updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
 
     # Upsert measurement to CSV
-    measurement = {
-        "id": args.id,
-        "library": library,
-        "command": args.command,
-        "cold_ms": str(cold_ms),
-        "warm_ms": str(warm_ms),
-        "version": args.version,
-        "version_url": args.version_url,
-        "run_url": run_url,
-        "last_updated": last_updated,
-    }
+    measurement = dict(zip(FIELDS, [
+        args.id, library, args.command, str(cold_ms), str(warm_ms),
+        args.version, args.version_url, run_url, last_updated
+    ]))
     upsert_measurement(measurement)
 
     # Rebuild entire HTML from CSV
