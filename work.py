@@ -65,6 +65,8 @@ def rebuild_html() -> None:
     )
 
     def css(ms):
+        print(ms)
+        print(type(ms))
         return "ok" if ms < 200 else "slow"
 
     rows = []
