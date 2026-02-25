@@ -3,7 +3,7 @@ vllm,0.14.1+cpu,https://github.com/vllm-project/vllm/releases/tag/v0.14.1,15610,
 sglang,v0.5.7,https://github.com/sgl-project/sglang/releases/tag/v0.5.7,13875,5490,https://github.com/netanel-haber/dash-dash-help/actions/runs/20701236663,2026-01-05T00:09Z
 VLMEvalKit,v0.2,https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2,14551,4990,https://github.com/netanel-haber/dash-dash-help/actions/runs/20701504064,2026-01-05T00:28Z
 transformers,5.2.0,https://github.com/huggingface/transformers/releases/tag/v5.2.0,0,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/22394050081,2026-02-25T11:04Z
-tensorrt-llm,1.0.0,https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.0.0,8208,2372,https://github.com/netanel-haber/dash-dash-help/actions/runs/20701139723,2026-01-05T00:04Z
+tensorrt-llm,1.0.0,https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.0.0,7467,2600,https://github.com/netanel-haber/dash-dash-help/actions/runs/22394060364,2026-02-25T11:14Z
 datasets,4.5.0,https://github.com/huggingface/datasets/releases/tag/4.5.0,3074,907,https://github.com/netanel-haber/dash-dash-help/actions/runs/22393976449,2026-02-25T11:02Z
 llm,0.28,https://github.com/simonw/llm/releases/tag/0.28,1205,569,https://github.com/netanel-haber/dash-dash-help/actions/runs/22393990717,2026-02-25T11:03Z
 openai,2.24.0,https://github.com/openai/openai-python/releases/tag/v2.24.0,1053,504,https://github.com/netanel-haber/dash-dash-help/actions/runs/22394005087,2026-02-25T11:03Z
