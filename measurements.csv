@@ -10,5 +10,5 @@ openai,2.31.0,https://github.com/openai/openai-python/releases/tag/v2.31.0,1069,
 langchain-cli,0.0.37,https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37,844,257,https://github.com/netanel-haber/dash-dash-help/actions/runs/24402866274,2026-04-14T13:52Z
 hf,1.10.2,https://github.com/huggingface/huggingface_hub/releases/tag/v1.10.2,1351,389,https://github.com/netanel-haber/dash-dash-help/actions/runs/24402759822,2026-04-14T13:50Z
 lm-eval,0.4.11,https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.11,800,228,https://github.com/netanel-haber/dash-dash-help/actions/runs/22394037930,2026-02-25T11:04Z
-llama.cpp,b8149,https://github.com/ggml-org/llama.cpp/releases/tag/b8149,19,13,https://github.com/netanel-haber/dash-dash-help/actions/runs/22394029264,2026-02-25T11:04Z
+llama.cpp,b8784,https://github.com/ggml-org/llama.cpp/releases/tag/b8784,16,14,https://github.com/netanel-haber/dash-dash-help/actions/runs/24402884321,2026-04-14T13:53Z
 ollama,0.20.7,https://github.com/ollama/ollama/releases/tag/v0.20.7,14,12,https://github.com/netanel-haber/dash-dash-help/actions/runs/24402724003,2026-04-14T13:50Z
