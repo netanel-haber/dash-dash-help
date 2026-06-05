@@ -4,7 +4,7 @@ sglang,v0.5.11,https://github.com/sgl-project/sglang/releases/tag/v0.5.11,13656,
 VLMEvalKit,v0.2,https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2,13984,5484,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725488101,2026-05-12T09:24Z
 transformers,5.8.0,https://github.com/huggingface/transformers/releases/tag/v5.8.0,0,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725022472,2026-05-12T09:13Z
 tensorrt-llm,1.2.1,https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.2.1,5743,2190,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725042703,2026-05-12T09:17Z
-datasets,4.8.5,https://github.com/huggingface/datasets/releases/tag/4.8.5,3424,973,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724870060,2026-05-12T09:10Z
+datasets,5.0.0,https://github.com/huggingface/datasets/releases/tag/5.0.0,3092,788,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024437557,2026-06-05T15:38Z
 llm,0.31,https://github.com/simonw/llm/releases/tag/0.31,1412,644,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724907639,2026-05-12T09:11Z
 openai,2.36.0,https://github.com/openai/openai-python/releases/tag/v2.36.0,1,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724938109,2026-05-12T09:11Z
 langchain-cli,0.0.37,https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37,819,262,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724956511,2026-05-12T09:12Z
