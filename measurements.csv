@@ -5,7 +5,7 @@ VLMEvalKit,v0.2,https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2,139
 transformers,5.8.0,https://github.com/huggingface/transformers/releases/tag/v5.8.0,0,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725022472,2026-05-12T09:13Z
 tensorrt-llm,1.2.1,https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.2.1,5743,2190,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725042703,2026-05-12T09:17Z
 datasets,5.0.0,https://github.com/huggingface/datasets/releases/tag/5.0.0,3092,788,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024437557,2026-06-05T15:38Z
-llm,0.31,https://github.com/simonw/llm/releases/tag/0.31,1412,644,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724907639,2026-05-12T09:11Z
+llm,0.31,https://github.com/simonw/llm/releases/tag/0.31,1399,618,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024470497,2026-06-05T15:38Z
 openai,2.36.0,https://github.com/openai/openai-python/releases/tag/v2.36.0,1,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724938109,2026-05-12T09:11Z
 langchain-cli,0.0.37,https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37,819,262,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724956511,2026-05-12T09:12Z
 hf,1.18.0,https://github.com/huggingface/huggingface_hub/releases/tag/v1.18.0,1148,392,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024410507,2026-06-05T15:37Z
