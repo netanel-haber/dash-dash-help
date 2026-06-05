@@ -65,7 +65,7 @@ def rebuild_html() -> None:
     )
 
     def css(ms):
-        return "ok" if int(ms) < 200 else "slow"
+        return "ok" if int(ms) < 1000 else "slow"
 
     rows = []
     for m in measurements:
