@@ -2,7 +2,7 @@
 
 ## Project Overview
 Dashboard at https://dashdashhelp.win tracking `--help` performance for LLM CLI tools.
-Goal: Make `--help` < 200ms. Tagline: "Let's help help help devs"
+Goal: Make `--help` < 1000ms. Tagline: "Let's help help help devs"
 
 ## User Preferences
 - **Minimal, terse, no AI slop** - keep everything simple and text-focused
@@ -20,7 +20,7 @@ library | command | cold | warm | version
 - command: the actual CLI command benchmarked (e.g., `ollama --help`)
 - cold: first run time, links to GitHub Actions run
 - warm: average of runs 2-11, links to GitHub Actions run
-- Both use class="ok" if <200ms, class="slow" if >=200ms
+- Both use class="ok" if <1000ms, class="slow" if >=1000ms
 - version: links to `github.com/{org}/{repo}/releases/tag/v{version}`
 
 ## Workflow Pattern
