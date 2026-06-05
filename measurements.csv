@@ -2,7 +2,7 @@ library,version,version_url,cold_ms,warm_ms,run_url,last_updated
 vllm,0.22.1+cpu,https://github.com/vllm-project/vllm/releases/tag/v0.22.1,15411,7228,https://github.com/netanel-haber/dash-dash-help/actions/runs/27023111558,2026-06-05T15:14Z
 sglang,v0.5.11,https://github.com/sgl-project/sglang/releases/tag/v0.5.11,13656,5536,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725257467,2026-05-12T09:19Z
 VLMEvalKit,v0.2,https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2,13984,5484,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725488101,2026-05-12T09:24Z
-transformers,5.8.0,https://github.com/huggingface/transformers/releases/tag/v5.8.0,0,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725022472,2026-05-12T09:13Z
+transformers,5.10.2,https://github.com/huggingface/transformers/releases/tag/v5.10.2,1,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024583058,2026-06-05T15:41Z
 tensorrt-llm,1.2.1,https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.2.1,5743,2190,https://github.com/netanel-haber/dash-dash-help/actions/runs/25725042703,2026-05-12T09:17Z
 datasets,5.0.0,https://github.com/huggingface/datasets/releases/tag/5.0.0,3092,788,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024437557,2026-06-05T15:38Z
 llm,0.31,https://github.com/simonw/llm/releases/tag/0.31,1399,618,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024470497,2026-06-05T15:38Z
