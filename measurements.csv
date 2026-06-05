@@ -8,7 +8,7 @@ datasets,4.8.5,https://github.com/huggingface/datasets/releases/tag/4.8.5,3424,9
 llm,0.31,https://github.com/simonw/llm/releases/tag/0.31,1412,644,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724907639,2026-05-12T09:11Z
 openai,2.36.0,https://github.com/openai/openai-python/releases/tag/v2.36.0,1,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724938109,2026-05-12T09:11Z
 langchain-cli,0.0.37,https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37,819,262,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724956511,2026-05-12T09:12Z
-hf,1.14.0,https://github.com/huggingface/huggingface_hub/releases/tag/v1.14.0,1038,380,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724843951,2026-05-12T09:10Z
+hf,1.18.0,https://github.com/huggingface/huggingface_hub/releases/tag/v1.18.0,1148,392,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024410507,2026-06-05T15:37Z
 lm-eval,0.4.12,https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.12,1910,330,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724992970,2026-05-12T09:13Z
 llama.cpp,b9114,https://github.com/ggml-org/llama.cpp/releases/tag/b9114,13,12,https://github.com/netanel-haber/dash-dash-help/actions/runs/25724978142,2026-05-12T09:12Z
 ollama,0.30.5,https://github.com/ollama/ollama/releases/tag/v0.30.5,15,14,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716,2026-06-05T15:37Z
