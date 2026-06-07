@@ -15,7 +15,7 @@ jobs:
       - name: Install openai
         run: |
           uv venv
-          uv pip install openai
+          uv pip install openai==2.34.0 # last version to support legacy python cli, see: https://github.com/openai/openai-python/releases/tag/v2.35.0
 
       - name: Get version
         id: version
