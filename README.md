@@ -22,4 +22,4 @@ https://dashdashhelp.win
 | llama.cpp | [14ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024535316) | [11ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024535316) | [b9529](https://github.com/ggml-org/llama.cpp/releases/tag/b9529) | 2026-06-05T15:39Z |
 | ollama | [15ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716) | [14ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716) | [0.30.5](https://github.com/ollama/ollama/releases/tag/v0.30.5) | 2026-06-05T15:37Z |
 
-Last updated: 2026-06-09 00:40 UTC
+Last updated: 2026-06-10 00:46 UTC
