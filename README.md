@@ -21,5 +21,6 @@ https://dashdashhelp.win
 | lm-eval | [1577ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024547386) | [246ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024547386) | [0.4.12](https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.12) | 2026-06-05T15:40Z |
 | llama.cpp | [14ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024535316) | [11ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024535316) | [b9529](https://github.com/ggml-org/llama.cpp/releases/tag/b9529) | 2026-06-05T15:39Z |
 | ollama | [15ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716) | [14ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716) | [0.30.5](https://github.com/ollama/ollama/releases/tag/v0.30.5) | 2026-06-05T15:37Z |
+| tokenspeed | [601ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27348393122) | [207ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27348393122) | [0.1.0@4df7c87](https://github.com/lightseekorg/tokenspeed/commit/4df7c87969b744fc8af62a59cfdc49f4439c30eb) | 2026-06-11T12:58Z |
 
-Last updated: 2026-06-11 00:46 UTC
+Last updated: 2026-06-11 13:00 UTC
