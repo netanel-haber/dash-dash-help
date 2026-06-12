@@ -618,8 +618,8 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
     for _ in range(args.status_attempts):
         info = json.loads(run(f"vastai --raw show instance {q(args.instance_id)}", capture=True).stdout)
         print(json.dumps(info, indent=2))
-        host = str(info.get("public_ipaddr") or "")
-        port = str(info.get("ports", {}).get("22/tcp", [{}])[0].get("HostPort") or "")
+        host = str(info.get("ssh_host") or "")
+        port = str(info.get("ssh_port") or "")
         if info.get("actual_status") == "running" and info.get("intended_status") == "running" and host and port:
             break
         time.sleep(10)
