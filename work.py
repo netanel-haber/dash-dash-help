@@ -229,168 +229,165 @@ def install_gpu_library(
     env = os.environ.copy()
     env["PATH"] = f"{Path.home() / '.local/bin'}:{env['PATH']}"
 
-    if library == "vllm":
-        with urlopen("https://api.github.com/repos/vllm-project/vllm/releases/latest") as f:
-            tag = str(json.load(f)["tag_name"])
-        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-        install_env = env | {"VLLM_USE_PRECOMPILED": "1"}
-        run(
-            f"uv pip install --python {q(python)} "
-            f"{q(f'vllm @ git+https://github.com/vllm-project/vllm.git@{tag}')} "
-            "--index-strategy unsafe-best-match",
-            env=install_env,
-        )
-        code = "from importlib.metadata import version; print(version('vllm'))"
-        version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
-        return (
-            f"{q(venv / 'bin' / 'vllm')} --help",
-            version,
-            f"https://github.com/vllm-project/vllm/releases/tag/{tag}",
-            None,
-        )
+    match library:
+        case "vllm":
+            with urlopen("https://api.github.com/repos/vllm-project/vllm/releases/latest") as f:
+                tag = str(json.load(f)["tag_name"])
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            install_env = env | {"VLLM_USE_PRECOMPILED": "1"}
+            run(
+                f"uv pip install --python {q(python)} "
+                f"{q(f'vllm @ git+https://github.com/vllm-project/vllm.git@{tag}')} "
+                "--index-strategy unsafe-best-match",
+                env=install_env,
+            )
+            code = "from importlib.metadata import version; print(version('vllm'))"
+            version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
+            return (
+                f"{q(venv / 'bin' / 'vllm')} --help",
+                version,
+                f"https://github.com/vllm-project/vllm/releases/tag/{tag}",
+                None,
+            )
+        case "sglang":
+            with urlopen("https://api.github.com/repos/sgl-project/sglang/releases/latest") as f:
+                tag = str(json.load(f)["tag_name"])
+            source = root / "src" / "sglang"
+            shutil.rmtree(source, ignore_errors=True)
+            run(f"git clone --depth 1 --branch {q(tag)} https://github.com/sgl-project/sglang.git {q(source)}")
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            run(f"uv pip install --python {q(python)} --upgrade pip setuptools {q(source / 'python')}", env=env)
+            return (
+                f"{q(python)} -m sglang.launch_server --help",
+                tag,
+                f"https://github.com/sgl-project/sglang/releases/tag/{tag}",
+                None,
+            )
+        case "VLMEvalKit":
+            with urlopen("https://api.github.com/repos/open-compass/VLMEvalKit/releases/latest") as f:
+                tag = str(json.load(f)["tag_name"])
+            source = root / "src" / "VLMEvalKit"
+            shutil.rmtree(source, ignore_errors=True)
+            run(f"git clone --depth 1 --branch {q(tag)} https://github.com/open-compass/VLMEvalKit.git {q(source)}")
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            run(f"uv pip install --python {q(python)} -e {q(source)}", env=env)
+            return (
+                f"{q(python)} {q(source / 'run.py')} --help",
+                tag,
+                f"https://github.com/open-compass/VLMEvalKit/releases/tag/{tag}",
+                None,
+            )
+        case "tensorrt-llm":
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            run(f"uv pip install --python {q(python)} tensorrt-llm click pynvml", env=env)
+            code = "from importlib.metadata import version; print(version('tensorrt-llm'))"
+            version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
+            return (
+                f"{q(venv / 'bin' / 'trtllm-serve')} --help",
+                version,
+                f"https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v{version}",
+                None,
+            )
+        case "tokenspeed":
+            with urlopen("https://api.github.com/repos/lightseekorg/tokenspeed/commits/main") as f:
+                commit = str(json.load(f)["sha"])
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            package_spec = (
+                f"tokenspeed @ git+https://github.com/lightseekorg/tokenspeed.git@{commit}#subdirectory=python"
+            )
+            run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
+            code = "from importlib.metadata import version; print(version('tokenspeed'))"
+            package_version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
+            version = f"{package_version}@{commit[:7]}"
+            return (
+                f"{q(venv / 'bin' / 'tokenspeed')} --help",
+                version,
+                f"https://github.com/lightseekorg/tokenspeed/commit/{commit}",
+                None,
+            )
+        case "llama.cpp":
+            with urlopen("https://api.github.com/repos/ggml-org/llama.cpp/releases/latest") as f:
+                release = json.load(f)
+            tag = str(release["tag_name"])
+            url = ""
+            for asset in release.get("assets", []):
+                name = str(asset.get("name", ""))
+                if "ubuntu" in name and "x64" in name and name.endswith(".tar.gz"):
+                    url = str(asset["browser_download_url"])
+                    break
+            if not url:
+                raise RuntimeError("No llama.cpp Ubuntu x64 tarball found")
+            dest = root / "llama-bin"
+            archive = root / "llama.tar.gz"
+            shutil.rmtree(dest, ignore_errors=True)
+            dest.mkdir(parents=True, exist_ok=True)
+            urlretrieve(url, archive)
+            run(f"tar -xzf {q(archive)} -C {q(dest)} --strip-components=1")
+            return (
+                f"{q(dest / 'llama-cli')} --help",
+                tag,
+                f"https://github.com/ggml-org/llama.cpp/releases/tag/{tag}",
+                None,
+            )
+        case "ollama":
+            run(f"bash -lc {q('curl -fsSL https://ollama.com/install.sh | sh')}")
+            command = r"ollama --version | grep -oP 'version is \K[0-9.]+'"
+            version = run(f"bash -lc {q(command)}", capture=True).stdout.strip()
+            return (
+                "ollama --help",
+                version,
+                f"https://github.com/ollama/ollama/releases/tag/v{version}",
+                None,
+            )
+        case _:
+            package_by_library = {
+                "transformers": (
+                    "transformers",
+                    "transformers-cli",
+                    "https://github.com/huggingface/transformers/releases/tag/v{version}",
+                ),
+                "datasets": (
+                    "datasets",
+                    "datasets-cli",
+                    "https://github.com/huggingface/datasets/releases/tag/{version}",
+                ),
+                "llm": ("llm", "llm", "https://github.com/simonw/llm/releases/tag/{version}"),
+                "openai": (
+                    "openai==2.34.0",
+                    "openai",
+                    "https://github.com/openai/openai-python/releases/tag/v{version}",
+                ),
+                "langchain-cli": (
+                    "langchain-cli",
+                    "langchain",
+                    "https://github.com/langchain-ai/langchain/releases/tag/langchain-cli=={version}",
+                ),
+                "hf": (
+                    "huggingface_hub",
+                    "hf",
+                    "https://github.com/huggingface/huggingface_hub/releases/tag/v{version}",
+                ),
+                "lm-eval": (
+                    "lm-eval",
+                    "lm-eval",
+                    "https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v{version}",
+                ),
+            }
+            if library not in package_by_library:
+                raise KeyError(f"Unknown GPU library: {library}")
 
-    if library == "sglang":
-        with urlopen("https://api.github.com/repos/sgl-project/sglang/releases/latest") as f:
-            tag = str(json.load(f)["tag_name"])
-        source = root / "src" / "sglang"
-        shutil.rmtree(source, ignore_errors=True)
-        run(f"git clone --depth 1 --branch {q(tag)} https://github.com/sgl-project/sglang.git {q(source)}")
-        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-        run(f"uv pip install --python {q(python)} --upgrade pip setuptools {q(source / 'python')}", env=env)
-        return (
-            f"{q(python)} -m sglang.launch_server --help",
-            tag,
-            f"https://github.com/sgl-project/sglang/releases/tag/{tag}",
-            None,
-        )
-
-    if library == "VLMEvalKit":
-        with urlopen("https://api.github.com/repos/open-compass/VLMEvalKit/releases/latest") as f:
-            tag = str(json.load(f)["tag_name"])
-        source = root / "src" / "VLMEvalKit"
-        shutil.rmtree(source, ignore_errors=True)
-        run(f"git clone --depth 1 --branch {q(tag)} https://github.com/open-compass/VLMEvalKit.git {q(source)}")
-        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-        run(f"uv pip install --python {q(python)} -e {q(source)}", env=env)
-        return (
-            f"{q(python)} {q(source / 'run.py')} --help",
-            tag,
-            f"https://github.com/open-compass/VLMEvalKit/releases/tag/{tag}",
-            None,
-        )
-
-    if library == "tensorrt-llm":
-        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-        run(f"uv pip install --python {q(python)} tensorrt-llm click pynvml", env=env)
-        code = "from importlib.metadata import version; print(version('tensorrt-llm'))"
-        version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
-        return (
-            f"{q(venv / 'bin' / 'trtllm-serve')} --help",
-            version,
-            f"https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v{version}",
-            None,
-        )
-
-    if library == "tokenspeed":
-        with urlopen("https://api.github.com/repos/lightseekorg/tokenspeed/commits/main") as f:
-            commit = str(json.load(f)["sha"])
-        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-        package_spec = f"tokenspeed @ git+https://github.com/lightseekorg/tokenspeed.git@{commit}#subdirectory=python"
-        run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
-        code = "from importlib.metadata import version; print(version('tokenspeed'))"
-        package_version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
-        version = f"{package_version}@{commit[:7]}"
-        return (
-            f"{q(venv / 'bin' / 'tokenspeed')} --help",
-            version,
-            f"https://github.com/lightseekorg/tokenspeed/commit/{commit}",
-            None,
-        )
-
-    if library == "llama.cpp":
-        with urlopen("https://api.github.com/repos/ggml-org/llama.cpp/releases/latest") as f:
-            release = json.load(f)
-        tag = str(release["tag_name"])
-        url = ""
-        for asset in release.get("assets", []):
-            name = str(asset.get("name", ""))
-            if "ubuntu" in name and "x64" in name and name.endswith(".tar.gz"):
-                url = str(asset["browser_download_url"])
-                break
-        if not url:
-            raise RuntimeError("No llama.cpp Ubuntu x64 tarball found")
-        dest = root / "llama-bin"
-        archive = root / "llama.tar.gz"
-        shutil.rmtree(dest, ignore_errors=True)
-        dest.mkdir(parents=True, exist_ok=True)
-        urlretrieve(url, archive)
-        run(f"tar -xzf {q(archive)} -C {q(dest)} --strip-components=1")
-        return (
-            f"{q(dest / 'llama-cli')} --help",
-            tag,
-            f"https://github.com/ggml-org/llama.cpp/releases/tag/{tag}",
-            None,
-        )
-
-    if library == "ollama":
-        run(f"bash -lc {q('curl -fsSL https://ollama.com/install.sh | sh')}")
-        command = r"ollama --version | grep -oP 'version is \K[0-9.]+'"
-        version = run(f"bash -lc {q(command)}", capture=True).stdout.strip()
-        return (
-            "ollama --help",
-            version,
-            f"https://github.com/ollama/ollama/releases/tag/v{version}",
-            None,
-        )
-
-    package_by_library = {
-        "transformers": (
-            "transformers",
-            "transformers-cli",
-            "https://github.com/huggingface/transformers/releases/tag/v{version}",
-        ),
-        "datasets": (
-            "datasets",
-            "datasets-cli",
-            "https://github.com/huggingface/datasets/releases/tag/{version}",
-        ),
-        "llm": ("llm", "llm", "https://github.com/simonw/llm/releases/tag/{version}"),
-        "openai": (
-            "openai==2.34.0",
-            "openai",
-            "https://github.com/openai/openai-python/releases/tag/v{version}",
-        ),
-        "langchain-cli": (
-            "langchain-cli",
-            "langchain",
-            "https://github.com/langchain-ai/langchain/releases/tag/langchain-cli=={version}",
-        ),
-        "hf": (
-            "huggingface_hub",
-            "hf",
-            "https://github.com/huggingface/huggingface_hub/releases/tag/v{version}",
-        ),
-        "lm-eval": (
-            "lm-eval",
-            "lm-eval",
-            "https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v{version}",
-        ),
-    }
-    if library not in package_by_library:
-        raise KeyError(f"Unknown GPU library: {library}")
-
-    package_spec, executable, url_template = package_by_library[library]
-    package = package_spec.split("==", 1)[0]
-    run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-    run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
-    code = "from importlib.metadata import version; import sys; print(version(sys.argv[1]))"
-    version = run(f"{q(python)} -c {q(code)} {q(package)}", capture=True).stdout.strip()
-    return (
-        f"{q(venv / 'bin' / executable)} --help",
-        version,
-        url_template.format(version=version),
-        None,
-    )
+            package_spec, executable, url_template = package_by_library[library]
+            package = package_spec.split("==", 1)[0]
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
+            code = "from importlib.metadata import version; import sys; print(version(sys.argv[1]))"
+            version = run(f"{q(python)} -c {q(code)} {q(package)}", capture=True).stdout.strip()
+            return (
+                f"{q(venv / 'bin' / executable)} --help",
+                version,
+                url_template.format(version=version),
+                None,
+            )
 
 
 def cmd_gpu_run(args: argparse.Namespace) -> None:
