@@ -4,26 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-
-      - name: Install openai
-        run: |
-          uv venv
-          uv pip install openai==2.34.0 # last version to support legacy python cli, see: https://github.com/openai/openai-python/releases/tag/v2.35.0
-
-      - name: Get version
-        id: version
-        run: echo "v=$(uv pip show openai | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py ".venv/bin/openai --help" \
-            --library openai \
-            --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/openai/openai-python/releases/tag/v${{ steps.version.outputs.v }}"
+    secrets: inherit
+    with:
+      library: openai

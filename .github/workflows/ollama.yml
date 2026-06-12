@@ -4,23 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install ollama
-        run: curl -fsSL https://ollama.com/install.sh | sh
-
-      - name: Get version
-        id: version
-        run: echo "v=$(ollama --version | grep -oP 'version is \K[0-9.]+')" >> $GITHUB_OUTPUT
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py "ollama --help" \
-            --library ollama \
-            --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/ollama/ollama/releases/tag/v${{ steps.version.outputs.v }}"
+    secrets: inherit
+    with:
+      library: ollama

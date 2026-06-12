@@ -4,29 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-
-      - name: Install VLMEvalKit from source
-        id: version
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG=$(gh api repos/open-compass/VLMEvalKit/releases/latest --jq '.tag_name')
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          git clone --depth 1 --branch "$TAG" https://github.com/open-compass/VLMEvalKit.git
-          cd VLMEvalKit
-          uv venv
-          uv pip install -e .
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py "./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help" \
-            --library VLMEvalKit \
-            --version "${{ steps.version.outputs.tag }}" \
-            --version-url "https://github.com/open-compass/VLMEvalKit/releases/tag/${{ steps.version.outputs.tag }}"
+    secrets: inherit
+    with:
+      library: VLMEvalKit

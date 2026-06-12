@@ -4,26 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-
-      - name: Install datasets
-        run: |
-          uv venv
-          uv pip install datasets
-
-      - name: Get version
-        id: version
-        run: echo "v=$(uv pip show datasets | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py ".venv/bin/datasets-cli --help" \
-            --library datasets \
-            --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/huggingface/datasets/releases/tag/${{ steps.version.outputs.v }}"
+    secrets: inherit
+    with:
+      library: datasets

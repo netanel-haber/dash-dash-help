@@ -4,25 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download latest release
-        id: version
-        run: |
-          TAG=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.tag_name')
-          echo "v=$TAG" >> $GITHUB_OUTPUT
-          curl -L -o llama.tar.gz "https://github.com/ggml-org/llama.cpp/releases/download/${TAG}/llama-${TAG}-bin-ubuntu-x64.tar.gz"
-          mkdir -p llama-bin && tar -xzf llama.tar.gz -C llama-bin --strip-components=1
-          chmod +x llama-bin/*
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py "./llama-bin/llama-cli --help" \
-            --library llama.cpp \
-            --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/ggml-org/llama.cpp/releases/tag/${{ steps.version.outputs.v }}"
+    secrets: inherit
+    with:
+      library: llama.cpp

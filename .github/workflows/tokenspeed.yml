@@ -4,35 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          df -h
-
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-
-      - name: Install tokenspeed
-        id: version
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          COMMIT=$(gh api repos/lightseekorg/tokenspeed/commits/main --jq '.sha')
-          echo "commit=$COMMIT" >> $GITHUB_OUTPUT
-          echo "short=${COMMIT:0:7}" >> $GITHUB_OUTPUT
-          uv venv
-          uv pip install "tokenspeed @ git+https://github.com/lightseekorg/tokenspeed.git@${COMMIT}#subdirectory=python" --torch-backend cpu
-          echo "v=$(uv pip show tokenspeed | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py ".venv/bin/tokenspeed --help" \
-            --library tokenspeed \
-            --version "${{ steps.version.outputs.v }}@${{ steps.version.outputs.short }}" \
-            --version-url "https://github.com/lightseekorg/tokenspeed/commit/${{ steps.version.outputs.commit }}"
+    secrets: inherit
+    with:
+      library: tokenspeed

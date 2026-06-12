@@ -4,30 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-
-      - name: Get latest tag and build
-        id: version
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG=$(gh api repos/vllm-project/vllm/releases/latest --jq '.tag_name')
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          uv venv
-          VLLM_TARGET_DEVICE=cpu VLLM_USE_PRECOMPILED=1 uv pip install "vllm @ git+https://github.com/vllm-project/vllm.git@${TAG}" \
-            --index-strategy unsafe-best-match \
-            --extra-index-url https://download.pytorch.org/whl/cpu
-          echo "v=$(uv pip show vllm | grep Version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py ".venv/bin/vllm --help" \
-            --library vllm \
-            --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/vllm-project/vllm/releases/tag/${{ steps.version.outputs.tag }}"
+    secrets: inherit
+    with:
+      library: vllm

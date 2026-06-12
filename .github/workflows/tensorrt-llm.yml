@@ -4,33 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
-    runs-on: ubuntu-latest
+  gpu:
+    uses: ./.github/workflows/all-gpu.yml
     permissions:
       contents: write
-    steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          df -h
-
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-
-      - name: Install tensorrt-llm
-        run: |
-          uv venv
-          uv pip install tensorrt-llm
-          uv pip install click pynvml
-
-      - name: Get version
-        id: version
-        run: echo "v=$(uv pip show tensorrt-llm | grep Version | cut -d' ' -f2 || echo unknown)" >> $GITHUB_OUTPUT
-
-      - name: Benchmark and update
-        run: |
-          python3 work.py ".venv/bin/trtllm-serve --help" \
-            --library tensorrt-llm \
-            --version "${{ steps.version.outputs.v }}" \
-            --version-url "https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v${{ steps.version.outputs.v }}"
+    secrets: inherit
+    with:
+      library: tensorrt-llm

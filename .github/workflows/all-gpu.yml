@@ -1,0 +1,168 @@
+name: all GPU --help
+
+on:
+  workflow_call:
+    secrets:
+      VAST_API_KEY:
+        required: true
+    inputs:
+      library:
+        type: string
+        required: false
+        default: all
+      max_price:
+        type: string
+        required: false
+        default: "0.10"
+      offer_query:
+        type: string
+        required: false
+        default: "gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=12.1 reliability>0.90 inet_down>50 direct_port_count>=1 rented=false verified=true"
+      destroy_instance_id:
+        type: string
+        required: false
+        default: ""
+  workflow_dispatch:
+    inputs:
+      library:
+        description: "Library to run, or all"
+        required: true
+        default: all
+      max_price:
+        description: "Max GPU price $/hour"
+        required: true
+        default: "0.10"
+      offer_query:
+        description: "Vast search query"
+        required: true
+        default: "gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=12.1 reliability>0.90 inet_down>50 direct_port_count>=1 rented=false verified=true"
+      destroy_instance_id:
+        description: "Optional Vast instance ID to destroy instead of benchmarking"
+        required: false
+        default: ""
+
+env:
+  VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
+  VAST_DISK_GB: "100"
+  VAST_IMAGE: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+
+jobs:
+  cleanup:
+    if: ${{ inputs.destroy_instance_id != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Vast CLI
+        run: |
+          test -n "$VAST_API_KEY"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          uv tool install vastai
+          export PATH="$HOME/.local/bin:$PATH"
+          vastai --version
+      - name: Destroy Vast instance
+        run: python3 work.py vast-destroy --instance-id "${{ inputs.destroy_instance_id }}"
+
+  bench:
+    if: ${{ inputs.destroy_instance_id == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install local tools
+        run: |
+          test -n "$VAST_API_KEY"
+          sudo apt update
+          sudo apt install -y --no-install-recommends openssh-client
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          uv tool install vastai
+          export PATH="$HOME/.local/bin:$PATH"
+          vastai --version
+
+      - name: Create SSH key
+        id: ssh_key
+        run: |
+          key="$RUNNER_TEMP/vast_key"
+          ssh-keygen -t ed25519 -f "$key" -N "" -C "dash-dash-help-${GITHUB_RUN_ID}"
+          chmod 600 "$key"
+          echo "private=$key" >> "$GITHUB_OUTPUT"
+          echo "public=$key.pub" >> "$GITHUB_OUTPUT"
+
+      - name: Rent Vast instance
+        id: rent
+        run: |
+          python3 work.py vast-rent \
+            --query "${{ inputs.offer_query }}" \
+            --max-price "${{ inputs.max_price }}" \
+            --disk-gb "$VAST_DISK_GB" \
+            --image "$VAST_IMAGE" \
+            --label "dash-dash-help-gpu-${GITHUB_RUN_ID}" \
+            --ssh-public-key "${{ steps.ssh_key.outputs.public }}"
+
+      - name: Wait for SSH
+        id: ssh
+        run: |
+          python3 work.py vast-wait \
+            --instance-id "${{ steps.rent.outputs.instance_id }}" \
+            --ssh-private-key "${{ steps.ssh_key.outputs.private }}"
+
+      - name: Copy runner
+        run: |
+          scp -i "${{ steps.ssh_key.outputs.private }}" \
+            -P "${{ steps.ssh.outputs.port }}" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            work.py "root@${{ steps.ssh.outputs.host }}:/root/work.py"
+
+      - name: Benchmark on Vast
+        run: |
+          ssh -i "${{ steps.ssh_key.outputs.private }}" \
+            -p "${{ steps.ssh.outputs.port }}" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
+            "root@${{ steps.ssh.outputs.host }}" \
+            'python3 -m pip install --upgrade uv &&
+             export PATH="$HOME/.local/bin:$PATH" &&
+             uv python install 3.12 &&
+             uv run --no-project --python 3.12 python /root/work.py gpu-run --library "${{ inputs.library }}" --output /tmp/dashdashhelp-gpu-results.json'
+
+      - name: Fetch results
+        id: results
+        run: |
+          result="$RUNNER_TEMP/dashdashhelp-gpu-results.json"
+          scp -i "${{ steps.ssh_key.outputs.private }}" \
+            -P "${{ steps.ssh.outputs.port }}" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "root@${{ steps.ssh.outputs.host }}:/tmp/dashdashhelp-gpu-results.json" "$result"
+          cat "$result"
+          echo "path=$result" >> "$GITHUB_OUTPUT"
+
+      - name: Capture Vast metadata
+        id: metadata
+        if: always() && steps.rent.outputs.instance_id != ''
+        run: |
+          metadata="$RUNNER_TEMP/vast-metadata.json"
+          python3 work.py vast-metadata --instance-id "${{ steps.rent.outputs.instance_id }}" > "$metadata"
+          cat "$metadata"
+          echo "path=$metadata" >> "$GITHUB_OUTPUT"
+
+      - name: Destroy Vast instance
+        if: always() && steps.rent.outputs.instance_id != ''
+        run: python3 work.py vast-destroy --instance-id "${{ steps.rent.outputs.instance_id }}" || true
+
+      - name: Update dashboard
+        if: ${{ steps.results.outputs.path != '' && steps.metadata.outputs.path != '' }}
+        run: |
+          python3 work.py gpu-update \
+            --results "${{ steps.results.outputs.path }}" \
+            --metadata "${{ steps.metadata.outputs.path }}"
