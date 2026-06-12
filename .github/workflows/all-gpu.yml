@@ -11,39 +11,15 @@ on:
         description: "Max GPU price $/hour"
         required: true
         default: "0.10"
-      offer_query:
-        description: "Vast search query"
-        required: true
-        default: "gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=12.1 reliability>0.90 inet_down>50 direct_port_count>=1 rented=false verified=true"
-      destroy_instance_id:
-        description: "Optional Vast instance ID to destroy instead of benchmarking"
-        required: false
-        default: ""
 
 env:
   VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
   VAST_DISK_GB: "100"
   VAST_IMAGE: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+  VAST_QUERY: gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=12.1 reliability>0.90 inet_down>50 direct_port_count>=1 rented=false verified=true
 
 jobs:
-  cleanup:
-    if: ${{ inputs.destroy_instance_id != '' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Install Vast CLI
-        run: |
-          test -n "$VAST_API_KEY"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          uv tool install vastai
-          export PATH="$HOME/.local/bin:$PATH"
-          vastai --version
-      - name: Destroy Vast instance
-        run: python3 work.py vast-destroy --instance-id "${{ inputs.destroy_instance_id }}"
-
   bench:
-    if: ${{ inputs.destroy_instance_id == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     permissions:
@@ -75,7 +51,7 @@ jobs:
         id: rent
         run: |
           python3 work.py vast-rent \
-            --query "${{ inputs.offer_query }}" \
+            --query "$VAST_QUERY" \
             --max-price "${{ inputs.max_price }}" \
             --disk-gb "$VAST_DISK_GB" \
             --image "$VAST_IMAGE" \

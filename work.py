@@ -142,14 +142,12 @@ def update_readme() -> None:
     if not separator:
         sys.exit("README.md is missing dashdashhelp.win marker")
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     README.write_text(
         before
         + separator
         + "\n"
         + "\n".join(rows)
-        + "\n\n"
-        + f"Last updated: {timestamp}\n"
+        + "\n"
     )
 
 
@@ -483,7 +481,7 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
         if unknown:
             sys.exit(f"Unknown GPU libraries: {', '.join(unknown)}")
     workers = max(1, min(len(libraries), os.cpu_count() or 1))
-    installs: dict[str, tuple[list[str], str, str, dict[str, str] | None, int]] = {}
+    installs: dict[str, tuple[list[str], str, str, dict[str, str] | None]] = {}
     results: list[dict[str, Any]] = []
     failures: list[dict[str, str]] = []
 
@@ -712,7 +710,6 @@ def cmd_vast_metadata(args: argparse.Namespace) -> None:
     print(json.dumps({
         "hardware": f"{gpu_count}x {gpu_name}",
         "hardware_url": f"{VAST_HARDWARE_URL}{quote(f'gpu_name={gpu_name}')}",
-        "vast_instance_id": args.instance_id,
     }, indent=2))
 
 
@@ -759,7 +756,6 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
 
 
 def cmd_rebuild(_: argparse.Namespace) -> None:
-    write_measurements(read_measurements())
     rebuild_html()
     update_readme()
 

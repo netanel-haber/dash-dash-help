@@ -24,7 +24,7 @@ Repo: `https://github.com/netanel-haber/dash-dash-help`
 - `measurements.csv`: benchmark data source of truth.
 - `index.html`: generated static dashboard with inline CSS.
 - `README.md`: generated markdown table for GitHub.
-- `work.py`: benchmark, GPU runner, Vast rental, CSV upsert, HTML/README rebuild, commit, rebase, push.
+- `work.py`: GPU benchmark runner, Vast rental, CSV upsert, HTML/README rebuild, commit, rebase, push.
 - `.nojekyll`: keep GitHub Pages from applying Jekyll.
 - `CNAME`: custom domain.
 
@@ -57,7 +57,7 @@ library | cold | warm (10 runs) | version | hardware | measured on
 
 ## Commands
 
-Regenerate README from CSV:
+Regenerate generated files from CSV:
 
 ```bash
 python3 work.py rebuild
@@ -86,7 +86,6 @@ python3 work.py gpu-run --libraries 'vllm sglang' --output /tmp/dashdashhelp-gpu
 - `all-gpu.yml` rents one cheapest matching on-demand Vast GPU, uses direct SSH, runs selected libraries on that instance, destroys it, then updates the table.
 - `libraries` defaults to `all`.
 - `libraries` accepts whitespace or comma lists: `vllm sglang`, `vllm,sglang`.
-- `update-readme.yml` is the only scheduled workflow: daily `0 0 * * *`.
 - Benchmark jobs need `contents: write`.
 - Use `astral-sh/setup-uv` and `uv` for Python package workflows.
 - Use Python `3.12` for GPU benchmark environments.
