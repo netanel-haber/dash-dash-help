@@ -142,7 +142,11 @@ def cmd_bench(args: argparse.Namespace) -> None:
     if args.dry_run:
         return log("DRY RUN: Skipping update")
 
-    kw = {k: v for k, v in vars(args).items() if k not in ("dry_run", "command")}
+    kw = {
+        k: v
+        for k, v in vars(args).items()
+        if k not in ("dry_run", "command", "cold_ms", "warm_ms")
+    }
     m = Measurement(
         **kw,
         cold_ms=cold_ms,
