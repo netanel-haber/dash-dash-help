@@ -160,15 +160,16 @@ def write_github_output(instance_id: str) -> None:
         output.write(f"instance_id={instance_id}\n")
 
 
-def attach_ssh_key(instance_id: str, public_key_path: Path) -> None:
+def register_ssh_key(public_key_path: Path) -> None:
     public_key = public_key_path.read_text(encoding="utf-8").strip()
-    result = run(["vastai", "attach", "ssh", instance_id, public_key])
-    if result.stdout.strip():
-        print(result.stdout.strip())
+    result = run(["vastai", "create", "ssh-key", public_key, "-y"])
+    print_output(result.stdout, result.stderr)
 
 
 def main() -> int:
     args = parse_args()
+    register_ssh_key(args.ssh_public_key)
+
     instance_id = rent_mode(args, "bid", f"{args.query} min_bid<={args.max_price}")
 
     if instance_id is None:
@@ -180,7 +181,6 @@ def main() -> int:
         return 1
 
     write_github_output(instance_id)
-    attach_ssh_key(instance_id, args.ssh_public_key)
     return 0
 
 
