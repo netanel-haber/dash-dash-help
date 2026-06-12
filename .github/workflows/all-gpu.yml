@@ -15,8 +15,8 @@ on:
 env:
   VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
   VAST_DISK_GB: "100"
-  VAST_IMAGE: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
-  VAST_QUERY: gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=12.1 reliability>0.90 inet_down>50 direct_port_count>=1 rented=false verified=true
+  VAST_IMAGE: nvidia/cuda:13.0.3-cudnn-devel-ubuntu24.04
+  VAST_QUERY: gpu_name=RTX_3060 gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=13.0 reliability>0.90 inet_down>=500 inet_down_cost<=0.004 direct_port_count>=1 rented=false verified=true
 
 jobs:
   bench:
@@ -84,7 +84,9 @@ jobs:
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=20 \
             "root@${{ steps.ssh.outputs.host }}" \
-            'python3 -m pip install --upgrade uv &&
+            'apt update &&
+             apt install -y --no-install-recommends python3 python3-pip ca-certificates curl &&
+             python3 -m pip install --break-system-packages --upgrade uv &&
              export PATH="$HOME/.local/bin:$PATH" &&
              export UV_CACHE_DIR=/root/dashdashhelp-gpu/uv-cache &&
              uv python install 3.12 &&

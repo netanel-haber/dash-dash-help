@@ -306,7 +306,8 @@ def install_gpu_library(
                 None,
             )
         case "tokenspeed":
-            commit = "4df7c87969b744fc8af62a59cfdc49f4439c30eb"
+            with urlopen("https://api.github.com/repos/lightseekorg/tokenspeed/commits/main") as f:
+                commit = str(json.load(f)["sha"])
             run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
             package_spec = (
                 f"tokenspeed @ git+https://github.com/lightseekorg/tokenspeed.git@{commit}#subdirectory=python"
@@ -328,7 +329,7 @@ def install_gpu_library(
             url = ""
             for asset in release.get("assets", []):
                 name = str(asset.get("name", ""))
-                if "ubuntu" in name and "x64" in name and name.endswith(".tar.gz"):
+                if name.endswith("-bin-ubuntu-x64.tar.gz"):
                     url = str(asset["browser_download_url"])
                     break
             if not url:
@@ -358,7 +359,7 @@ def install_gpu_library(
         case _:
             package_by_library = {
                 "transformers": (
-                    "transformers",
+                    "transformers requests",
                     "transformers",
                     "https://github.com/huggingface/transformers/releases/tag/v{version}",
                 ),
@@ -369,7 +370,7 @@ def install_gpu_library(
                 ),
                 "llm": ("llm", "llm", "https://github.com/simonw/llm/releases/tag/{version}"),
                 "openai": (
-                    "openai==2.34.0",
+                    "openai",
                     "openai",
                     "https://github.com/openai/openai-python/releases/tag/v{version}",
                 ),
@@ -393,7 +394,7 @@ def install_gpu_library(
                 raise KeyError(f"Unknown GPU library: {library}")
 
             package_spec, executable, url_template = package_by_library[library]
-            package = package_spec.split("==", 1)[0]
+            package = package_spec.split()[0].split("==", 1)[0]
             run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
             run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env, log_file=log_file)
             code = "from importlib.metadata import version; import sys; print(version(sys.argv[1]))"
@@ -546,18 +547,23 @@ def cmd_vast_rent(args: argparse.Namespace) -> None:
     if proc.stderr.strip():
         print(proc.stderr.strip(), file=sys.stderr)
 
-    query = f"{args.query} dph<={args.max_price}"
+    query = f"{args.query} dph_total<={args.max_price}"
     offers = json.loads(
         run(
             f"vastai --raw search offers --type on-demand {q(query)} "
-            f"--storage {q(args.disk_gb)} --limit {args.limit} -o dph",
+            f"--storage {q(args.disk_gb)} --limit {args.limit} -o dph_total",
             capture=True,
         ).stdout
     )
     if not isinstance(offers, list):
         raise TypeError(f"Expected Vast offer list, got {type(offers).__name__}")
+
+    max_price = float(args.max_price)
+    offers = [
+        offer for offer in offers if offer.get("dph_total") is not None and float(offer["dph_total"]) <= max_price
+    ]
     offers.sort(key=lambda offer: float(offer.get("dph_total") or offer.get("dph") or "inf"))
-    log(f"Found {len(offers)} on-demand offers")
+    log(f"Found {len(offers)} on-demand offers under ${args.max_price}/hr total")
 
     for offer in offers[:5]:
         offer_id = str(offer.get("id") or offer.get("ask_contract_id") or "")

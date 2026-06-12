@@ -83,14 +83,17 @@ python3 work.py gpu-run --libraries 'vllm sglang' --output /tmp/dashdashhelp-gpu
 
 - `all-gpu.yml` is the benchmark workflow.
 - Benchmark workflow runs are manual only: `workflow_dispatch`.
-- `all-gpu.yml` rents one cheapest matching on-demand Vast GPU, uses direct SSH, runs selected libraries on that instance, updates the table, then destroys it.
+- `all-gpu.yml` rents one cheapest matching on-demand Vast RTX 3060 GPU, uses direct SSH, runs selected libraries on that instance, updates the table, then destroys it.
+- Vast GPU rentals require RTX 3060, at least `500 Mbps` download, and download bandwidth cost at most `$4/TB`.
+- Vast price filtering must use `dph_total`, so disk cost is included in the max price.
+- Current GPU image is CUDA 13 because latest TensorRT-LLM needs CUDA 13 runtime libraries.
 - `libraries` defaults to `all`.
 - `libraries` accepts whitespace or comma lists: `vllm sglang`, `vllm,sglang`.
 - Benchmark jobs need `contents: write`.
 - Use `astral-sh/setup-uv` and `uv` for Python package workflows.
 - Use Python `3.12` for GPU benchmark environments.
 - Use `uv venv` and `uv pip install`, not `pip`.
-- Use published PyPI versions for normal Python packages; pin only when needed.
+- Use latest library versions.
 - After workflow changes, GitHub may take about `30s` before `workflow_dispatch` is visible.
 
 Run all:
@@ -112,7 +115,7 @@ gh workflow run all-gpu.yml --ref main -f libraries='vllm sglang'
 | `vllm` | `vllm --help` |
 | `sglang` | `python -m sglang.launch_server --help` |
 | `VLMEvalKit` | `python run.py --help` |
-| `transformers` | `transformers-cli --help` |
+| `transformers` | `transformers --help` |
 | `tensorrt-llm` | `trtllm-serve --help` |
 | `datasets` | `datasets-cli --help` |
 | `llm` | `llm --help` |
@@ -126,13 +129,12 @@ gh workflow run all-gpu.yml --ref main -f libraries='vllm sglang'
 
 ## Package gotchas
 
-- `openai`: pinned to `2.34.0`; `2.35.0` removed the legacy Python CLI.
 - `tokenspeed`: install from the latest `lightseekorg/tokenspeed` `main` commit, subdirectory `python`; version URL points to the exact commit.
-- `llama.cpp`: download latest GitHub release binary tarball; no `uv`.
+- `llama.cpp`: download the latest plain Ubuntu x64 GitHub release binary tarball; avoid OpenVINO/ROCm/SYCL/Vulkan variants.
 - `vllm`: install latest release tag from GitHub with `VLLM_USE_PRECOMPILED=1` and `--index-strategy unsafe-best-match`.
 - `VLMEvalKit`: clone latest release tag and install from source with `uv pip install -e .`.
 - `tensorrt-llm`: free disk space first; install `tensorrt-llm`, `click`, and `pynvml`; benchmark `trtllm-serve --help`, not `trtllm --help`.
-- `sglang`: clone latest release tag and install `python/` from source.
+- `sglang`: install latest PyPI package.
 
 ## YAML gotchas
 
