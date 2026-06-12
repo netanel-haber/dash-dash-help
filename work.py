@@ -16,13 +16,14 @@ from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 from urllib.request import urlopen, urlretrieve
 
 ROOT = Path(__file__).parent
 INDEX_HTML = ROOT / "index.html"
 MEASUREMENTS_CSV = ROOT / "measurements.csv"
 README = ROOT / "README.md"
-VAST_HARDWARE_URL = "https://cloud.vast.ai/instances/"
+VAST_HARDWARE_URL = "https://cloud.vast.ai/create/?q="
 PYTHON = "3.12"
 
 
@@ -510,7 +511,13 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
     root = Path(args.root)
     root.mkdir(parents=True, exist_ok=True)
     (root / "src").mkdir(exist_ok=True)
-    libraries = gpu_libraries() if args.library == "all" else [args.library]
+    if args.libraries.strip() == "all":
+        libraries = gpu_libraries()
+    else:
+        libraries = [x for x in re.split(r"[,\s]+", args.libraries.strip()) if x]
+        unknown = sorted(set(libraries) - set(gpu_libraries()))
+        if unknown:
+            sys.exit(f"Unknown GPU libraries: {', '.join(unknown)}")
     workers = max(1, min(len(libraries), os.cpu_count() or 1))
     installs: dict[str, tuple[list[str], str, str, dict[str, str] | None, int]] = {}
     results: list[dict[str, Any]] = []
@@ -755,7 +762,7 @@ def cmd_vast_metadata(args: argparse.Namespace) -> None:
     gpu_name = str(info.get("gpu_name") or "unknown GPU")
     print(json.dumps({
         "hardware": f"{gpu_count}x {gpu_name}",
-        "hardware_url": f"{VAST_HARDWARE_URL}{args.instance_id}",
+        "hardware_url": f"{VAST_HARDWARE_URL}{quote(f'gpu_name={gpu_name}')}",
         "gpu_seconds": str(seconds),
         "gpu_cost_usd": f"{hourly * seconds / 3600:.4f}",
         "vast_instance_id": args.instance_id,
@@ -889,7 +896,7 @@ def main() -> None:
         return
 
     if command == "gpu-run":
-        p.add_argument("--library", required=True)
+        p.add_argument("--libraries", default="all")
         p.add_argument("--output", required=True)
         p.add_argument("--root", default="/root/dashdashhelp-gpu")
         cmd_gpu_run(p.parse_args(sys.argv[2:]))

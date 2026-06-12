@@ -1,32 +1,11 @@
 name: all GPU --help
 
 on:
-  workflow_call:
-    secrets:
-      VAST_API_KEY:
-        required: true
-    inputs:
-      library:
-        type: string
-        required: false
-        default: all
-      max_price:
-        type: string
-        required: false
-        default: "0.10"
-      offer_query:
-        type: string
-        required: false
-        default: "gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=12.1 reliability>0.90 inet_down>50 direct_port_count>=1 rented=false verified=true"
-      destroy_instance_id:
-        type: string
-        required: false
-        default: ""
   workflow_dispatch:
     inputs:
-      library:
-        description: "Library to run, or all"
-        required: true
+      libraries:
+        description: "Libraries to run: all, vllm, or 'vllm sglang'"
+        required: false
         default: all
       max_price:
         description: "Max GPU price $/hour"
@@ -132,7 +111,7 @@ jobs:
             'python3 -m pip install --upgrade uv &&
              export PATH="$HOME/.local/bin:$PATH" &&
              uv python install 3.12 &&
-             uv run --no-project --python 3.12 python /root/work.py gpu-run --library "${{ inputs.library }}" --output /tmp/dashdashhelp-gpu-results.json'
+             uv run --no-project --python 3.12 python /root/work.py gpu-run --libraries "${{ inputs.libraries }}" --output /tmp/dashdashhelp-gpu-results.json'
 
       - name: Fetch results
         id: results

@@ -24,8 +24,7 @@ Repo: `https://github.com/netanel-haber/dash-dash-help`
 - `measurements.csv`: benchmark data source of truth.
 - `index.html`: generated static dashboard with inline CSS.
 - `README.md`: generated markdown table for GitHub.
-- `work.py`: benchmark, CSV upsert, HTML rebuild, commit, rebase, push.
-- `update_readme.py`: README table rebuild from `measurements.csv`.
+- `work.py`: benchmark, GPU runner, Vast rental, CSV upsert, HTML/README rebuild, commit, rebase, push.
 - `.nojekyll`: keep GitHub Pages from applying Jekyll.
 - `CNAME`: custom domain.
 
@@ -36,13 +35,13 @@ Do not hand-edit generated benchmark rows in `index.html` or `README.md` as the 
 CSV fields:
 
 ```text
-library,version,version_url,cold_ms,warm_ms,run_url,last_updated
+library,version,version_url,cold_ms,warm_ms,run_url,last_updated,hardware,hardware_url,gpu_seconds,gpu_cost_usd
 ```
 
 Dashboard columns:
 
 ```text
-library | cold | warm (10 runs) | version | measured on
+library | cold | warm (10 runs) | version | hardware | gpu time | gpu cost | measured on
 ```
 
 - `cold_ms`: first run.
@@ -50,23 +49,24 @@ library | cold | warm (10 runs) | version | measured on
 - `last_updated`: UTC ISO 8601 timestamp, for example `2026-06-05T15:47Z`.
 - Times link to the GitHub Actions run.
 - Versions link to the release tag or exact commit.
+- Hardware links to a public Vast GPU-kind search, not a private instance page.
 - Use `class="ok"` for times `<1000ms`.
 - Use `class="slow"` for times `>=1000ms`.
 - Sort dashboard rows by `warm_ms` descending.
-- `README.md` preserves CSV order.
+- Sort README rows by `warm_ms` descending.
 
 ## Commands
 
 Regenerate README from CSV:
 
 ```bash
-python3 update_readme.py
+python3 work.py rebuild
 ```
 
 Local benchmark smoke test:
 
 ```bash
-python3 work.py "<command>" --library <name> --version <version> --version-url <url> --dry-run
+python3 work.py bench "<command>" --library <name> --version <version> --version-url <url> --dry-run
 ```
 
 Use `--dry-run` locally unless intentionally committing and pushing.
@@ -76,75 +76,68 @@ Use `--dry-run` locally unless intentionally committing and pushing.
 - `work.py` defaults to 11 runs.
 - Cold time is run 1.
 - Warm time is the integer average of runs 2-11.
-- `work.py --cold-ms --warm-ms` records externally measured timings instead of benchmarking locally.
-- `work.py` captures output but does not fail on a non-zero benchmark command.
+- `work.py bench --cold-ms --warm-ms` records externally measured timings instead of benchmarking locally.
+- `work.py bench` captures output but does not fail on a non-zero benchmark command.
 - Verify suspicious `0ms` or `1ms` results; they often mean the command failed fast.
 - Commit format is currently `{library}: cold_ms={cold}/warm_ms={warm} @ {version}`.
-- `work.py` commits only `measurements.csv` and `index.html`.
+- `work.py` commits `measurements.csv`, `index.html`, and `README.md`.
 - `work.py` rebases before push and retries pushes.
 
 ## Workflows
 
-- Benchmark workflows are manual only: `workflow_dispatch`.
+- `all-gpu.yml` is the benchmark workflow.
+- Benchmark workflow runs are manual only: `workflow_dispatch`.
+- `all-gpu.yml` rents one cheapest matching on-demand Vast GPU, uses direct SSH, runs selected libraries on that instance, destroys it, then updates the table.
+- `libraries` defaults to `all`.
+- `libraries` accepts whitespace or comma lists: `vllm sglang`, `vllm,sglang`.
 - `update-readme.yml` is the only scheduled workflow: daily `0 0 * * *`.
-- `all.yml` manually triggers benchmark workflows sequentially and watches each run.
-- `vllm-gpu.yml` is a temporary manual Vast.ai trial. It updates the existing `vllm` row, not a `vllm-gpu` row.
 - Benchmark jobs need `contents: write`.
-- `all.yml` needs `actions: write`.
 - Use `astral-sh/setup-uv` and `uv` for Python package workflows.
+- Use Python `3.12` for GPU benchmark environments.
 - Use `uv venv` and `uv pip install`, not `pip`.
 - Use published PyPI versions for normal Python packages; pin only when needed.
 - After workflow changes, GitHub may take about `30s` before `workflow_dispatch` is visible.
 
-`all.yml` order:
+Run all:
 
-```text
-ollama hf datasets llm openai langchain-cli llama-cpp lm-eval transformers tokenspeed tensorrt-llm sglang vllm vlmevalkit update-readme
+```bash
+gh workflow run all-gpu.yml --ref main
+```
+
+Run selected libraries:
+
+```bash
+gh workflow run all-gpu.yml --ref main -f libraries='vllm sglang'
 ```
 
 ## Active benchmarks
 
-| Library | Workflow | Command |
-| --- | --- | --- |
-| `ollama` | `ollama.yml` | `ollama --help` |
-| `hf` | `hf.yml` | `.venv/bin/hf --help` |
-| `datasets` | `datasets.yml` | `.venv/bin/datasets-cli --help` |
-| `llm` | `llm.yml` | `.venv/bin/llm --help` |
-| `openai` | `openai.yml` | `.venv/bin/openai --help` |
-| `langchain-cli` | `langchain-cli.yml` | `.venv/bin/langchain --help` |
-| `llama.cpp` | `llama-cpp.yml` | `./llama-bin/llama-cli --help` |
-| `lm-eval` | `lm-eval.yml` | `.venv/bin/lm-eval --help` |
-| `transformers` | `transformers.yml` | `.venv/bin/transformers-cli --help` |
-| `tokenspeed` | `tokenspeed.yml` | `.venv/bin/tokenspeed --help` |
-| `tensorrt-llm` | `tensorrt-llm.yml` | `.venv/bin/trtllm-serve --help` |
-| `sglang` | `sglang.yml` | `.venv/bin/python -m sglang.launch_server --help` |
-| `vllm` | `vllm.yml` | `.venv/bin/vllm --help` |
-| `vllm` | `vllm-gpu.yml` | `.venv/bin/vllm --help` |
-| `VLMEvalKit` | `vlmevalkit.yml` | `./VLMEvalKit/.venv/bin/python ./VLMEvalKit/run.py --help` |
+| Library | Command |
+| --- | --- |
+| `vllm` | `vllm --help` |
+| `sglang` | `python -m sglang.launch_server --help` |
+| `VLMEvalKit` | `python run.py --help` |
+| `transformers` | `transformers-cli --help` |
+| `tensorrt-llm` | `trtllm-serve --help` |
+| `datasets` | `datasets-cli --help` |
+| `llm` | `llm --help` |
+| `openai` | `openai --help` |
+| `langchain-cli` | `langchain --help` |
+| `hf` | `hf --help` |
+| `lm-eval` | `lm-eval --help` |
+| `llama.cpp` | `llama-cli --help` |
+| `ollama` | `ollama --help` |
+| `tokenspeed` | `tokenspeed --help` |
 
 ## Package gotchas
 
 - `openai`: pinned to `2.34.0`; `2.35.0` removed the legacy Python CLI.
-- `tokenspeed`: install from the latest `lightseekorg/tokenspeed` `main` commit, subdirectory `python`, with `--torch-backend cpu`; version URL points to the exact commit.
+- `tokenspeed`: install from the latest `lightseekorg/tokenspeed` `main` commit, subdirectory `python`; version URL points to the exact commit.
 - `llama.cpp`: download latest GitHub release binary tarball; no `uv`.
-- `vllm`: install latest release tag from GitHub with `VLLM_TARGET_DEVICE=cpu`, `VLLM_USE_PRECOMPILED=1`, `--index-strategy unsafe-best-match`, and PyTorch CPU extra index.
-- `vllm-gpu`: temporary direct Vast.ai workflow. It requires GitHub secret `VAST_API_KEY`, uses `vastai` CLI, rents the cheapest matching interruptible NVIDIA Turing-or-newer GPU under the dispatch-time max bid $/hour, benchmarks remotely, destroys the instance, then records timings locally.
-- `vllm-experimental`: dry-run only; benchmarks `python3 -m vllm.hello` from a specific fork commit and does not update data.
+- `vllm`: install latest release tag from GitHub with `VLLM_USE_PRECOMPILED=1` and `--index-strategy unsafe-best-match`.
 - `VLMEvalKit`: clone latest release tag and install from source with `uv pip install -e .`.
 - `tensorrt-llm`: free disk space first; install `tensorrt-llm`, `click`, and `pynvml`; benchmark `trtllm-serve --help`, not `trtllm --help`.
-- `sglang`: clone latest release tag, use Python `3.12`, copy `python/pyproject_cpu.toml` to `python/pyproject.toml`, install from source, and set `SGLANG_USE_CPU_ENGINE=1` for benchmark.
-- `transformers`: install `transformers torch` with PyTorch CPU extra index.
-
-## Removed or historical behavior
-
-- Do not bring back the install column.
-- Do not bring back the PR column.
-- Do not bring back screenshot automation.
-- Do not bring back `html_to_markdown.py`; README generation is now `update_readme.py` from CSV.
-- Do not bring back `.github/workflows/sort.yml`; sorting happens in `work.py`.
-- Do not add cron schedules to benchmark workflows unless asked.
-- Do not recreate `.github/copilot-instructions.md` or `screenshot.png` unless asked.
-- `CLAUDE.md` was replaced by `AGENTS.md`; keep repo instructions here.
+- `sglang`: clone latest release tag and install `python/` from source.
 
 ## YAML gotchas
 
