@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
@@ -25,6 +25,33 @@ MEASUREMENTS_CSV = ROOT / "measurements.csv"
 README = ROOT / "README.md"
 VAST_HARDWARE_URL = "https://cloud.vast.ai/create/?q="
 PYTHON = "3.12"
+CSV_FIELDS = [
+    "library",
+    "version",
+    "version_url",
+    "cold_ms",
+    "warm_ms",
+    "run_url",
+    "last_updated",
+    "hardware",
+    "hardware_url",
+]
+GPU_LIBRARIES = [
+    "vllm",
+    "sglang",
+    "VLMEvalKit",
+    "transformers",
+    "tensorrt-llm",
+    "datasets",
+    "llm",
+    "openai",
+    "langchain-cli",
+    "hf",
+    "lm-eval",
+    "llama.cpp",
+    "ollama",
+    "tokenspeed",
+]
 
 
 def log(msg: str) -> None:
@@ -48,22 +75,16 @@ def read_measurements() -> list[Measurement]:
     assert MEASUREMENTS_CSV.is_file()
     with open(MEASUREMENTS_CSV) as f:
         return [
-            Measurement(
-                **{
-                    field.name: row.get(field.name, "")
-                    for field in fields(Measurement)
-                }
-            )
+            Measurement(**{key: row.get(key, "") for key in CSV_FIELDS})
             for row in csv.DictReader(f)
         ]
 
 
 def write_measurements(measurements: list[Measurement]) -> None:
-    fieldnames = [f.name for f in fields(Measurement)]
     with open(MEASUREMENTS_CSV, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS, lineterminator="\n")
         writer.writeheader()
-        writer.writerows(asdict(m) for m in measurements)
+        writer.writerows(m.__dict__ for m in measurements)
     log(f"Wrote {len(measurements)} measurements")
 
 
@@ -191,25 +212,6 @@ def run(
         env=env,
         text=True,
     )
-
-
-def gpu_libraries() -> list[str]:
-    return [
-        "vllm",
-        "sglang",
-        "VLMEvalKit",
-        "transformers",
-        "tensorrt-llm",
-        "datasets",
-        "llm",
-        "openai",
-        "langchain-cli",
-        "hf",
-        "lm-eval",
-        "llama.cpp",
-        "ollama",
-        "tokenspeed",
-    ]
 
 
 def install_gpu_library(
@@ -474,10 +476,10 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
     root.mkdir(parents=True, exist_ok=True)
     (root / "src").mkdir(exist_ok=True)
     if args.libraries.strip() == "all":
-        libraries = gpu_libraries()
+        libraries = GPU_LIBRARIES
     else:
         libraries = [x for x in re.split(r"[,\s]+", args.libraries.strip()) if x]
-        unknown = sorted(set(libraries) - set(gpu_libraries()))
+        unknown = sorted(set(libraries) - set(GPU_LIBRARIES))
         if unknown:
             sys.exit(f"Unknown GPU libraries: {', '.join(unknown)}")
     workers = max(1, min(len(libraries), os.cpu_count() or 1))
@@ -696,26 +698,16 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
     sys.exit("SSH never became ready")
 
 
-def cmd_vast_destroy(args: argparse.Namespace) -> None:
-    run(["vastai", "destroy", "instance", args.instance_id, "-y"])
-
-
-def cmd_vast_metadata(args: argparse.Namespace) -> None:
+def cmd_gpu_update(args: argparse.Namespace) -> None:
+    payload = json.loads(Path(args.results).read_text())
     info = json.loads(
         run(["vastai", "--raw", "show", "instance", args.instance_id], capture=True)
         .stdout
     )
     gpu_count = int(info.get("num_gpus") or info.get("gpu_count") or 1)
     gpu_name = str(info.get("gpu_name") or "unknown GPU")
-    print(json.dumps({
-        "hardware": f"{gpu_count}x {gpu_name}",
-        "hardware_url": f"{VAST_HARDWARE_URL}{quote(f'gpu_name={gpu_name}')}",
-    }, indent=2))
-
-
-def cmd_gpu_update(args: argparse.Namespace) -> None:
-    payload = json.loads(Path(args.results).read_text())
-    metadata = json.loads(Path(args.metadata).read_text())
+    hardware = f"{gpu_count}x {gpu_name}"
+    hardware_url = f"{VAST_HARDWARE_URL}{quote(f'gpu_name={gpu_name}')}"
     measurements = read_measurements()
     run_url = (
         f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/"
@@ -732,8 +724,8 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
             warm_ms=int(result["warm_ms"]),
             run_url=run_url,
             last_updated=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
-            hardware=str(metadata.get("hardware", "")),
-            hardware_url=str(metadata.get("hardware_url", "")),
+            hardware=hardware,
+            hardware_url=hardware_url,
         )
         idx = next(
             (i for i, row in enumerate(measurements) if row.library == measurement.library),
@@ -755,16 +747,11 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
-def cmd_rebuild(_: argparse.Namespace) -> None:
-    rebuild_html()
-    update_readme()
-
-
 def main() -> None:
     if len(sys.argv) == 1:
         sys.exit(
             "usage: work.py {gpu-run,gpu-update,rebuild,"
-            "vast-destroy,vast-metadata,vast-rent,vast-wait}"
+            "vast-destroy,vast-rent,vast-wait}"
         )
     command = sys.argv[1]
     p = argparse.ArgumentParser()
@@ -778,22 +765,19 @@ def main() -> None:
 
     if command == "gpu-update":
         p.add_argument("--results", required=True)
-        p.add_argument("--metadata", required=True)
+        p.add_argument("--instance-id", required=True)
         cmd_gpu_update(p.parse_args(sys.argv[2:]))
         return
 
     if command == "rebuild":
-        cmd_rebuild(p.parse_args(sys.argv[2:]))
+        rebuild_html()
+        update_readme()
         return
 
     if command == "vast-destroy":
         p.add_argument("--instance-id", required=True)
-        cmd_vast_destroy(p.parse_args(sys.argv[2:]))
-        return
-
-    if command == "vast-metadata":
-        p.add_argument("--instance-id", required=True)
-        cmd_vast_metadata(p.parse_args(sys.argv[2:]))
+        args = p.parse_args(sys.argv[2:])
+        run(["vastai", "destroy", "instance", args.instance_id, "-y"])
         return
 
     if command == "vast-rent":

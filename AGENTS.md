@@ -83,7 +83,7 @@ python3 work.py gpu-run --libraries 'vllm sglang' --output /tmp/dashdashhelp-gpu
 
 - `all-gpu.yml` is the benchmark workflow.
 - Benchmark workflow runs are manual only: `workflow_dispatch`.
-- `all-gpu.yml` rents one cheapest matching on-demand Vast GPU, uses direct SSH, runs selected libraries on that instance, destroys it, then updates the table.
+- `all-gpu.yml` rents one cheapest matching on-demand Vast GPU, uses direct SSH, runs selected libraries on that instance, updates the table, then destroys it.
 - `libraries` defaults to `all`.
 - `libraries` accepts whitespace or comma lists: `vllm sglang`, `vllm,sglang`.
 - Benchmark jobs need `contents: write`.
