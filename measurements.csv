@@ -1,15 +1,15 @@
 library,version,version_url,cold_ms,warm_ms,run_url,last_updated,hardware,hardware_url
-vllm,0.22.1+precompiled,https://github.com/vllm-project/vllm/releases/tag/v0.22.1,18126,8169,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425289428,2026-06-12T15:31Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
+vllm,0.22.1+precompiled,https://github.com/vllm-project/vllm/releases/tag/v0.22.1,13383,5607,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
 sglang,v0.5.12.post1,https://github.com/sgl-project/sglang/releases/tag/v0.5.12.post1,28834,5252,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024732605,2026-06-05T15:45Z,,
 VLMEvalKit,v0.2,https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2,15757,6397,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024947957,2026-06-05T15:50Z,,
 transformers,5.10.2,https://github.com/huggingface/transformers/releases/tag/v5.10.2,1,0,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024583058,2026-06-05T15:41Z,,
 tensorrt-llm,1.2.1,https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.2.1,6722,2109,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024612193,2026-06-05T15:43Z,,
-datasets,5.0.0,https://github.com/huggingface/datasets/releases/tag/5.0.0,3092,788,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024437557,2026-06-05T15:38Z,,
-llm,0.31,https://github.com/simonw/llm/releases/tag/0.31,1399,618,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024470497,2026-06-05T15:38Z,,
-openai,2.34.0,https://github.com/openai/openai-python/releases/tag/v2.34.0,1201,525,https://github.com/netanel-haber/dash-dash-help/actions/runs/27092062663,2026-06-07T12:06Z,,
-langchain-cli,0.0.37,https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37,863,295,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024512190,2026-06-05T15:39Z,,
-hf,1.18.0,https://github.com/huggingface/huggingface_hub/releases/tag/v1.18.0,1148,392,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024410507,2026-06-05T15:37Z,,
-lm-eval,0.4.12,https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.12,1577,246,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024547386,2026-06-05T15:40Z,,
+datasets,5.0.0,https://github.com/huggingface/datasets/releases/tag/5.0.0,2593,787,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
+llm,0.31,https://github.com/simonw/llm/releases/tag/0.31,1015,452,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
+openai,2.34.0,https://github.com/openai/openai-python/releases/tag/v2.34.0,822,397,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
+langchain-cli,0.0.37,https://github.com/langchain-ai/langchain/releases/tag/langchain-cli==0.0.37,615,199,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
+hf,1.19.0,https://github.com/huggingface/huggingface_hub/releases/tag/v1.19.0,1083,294,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
+lm-eval,0.4.12,https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.12,1346,254,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
 llama.cpp,b9529,https://github.com/ggml-org/llama.cpp/releases/tag/b9529,14,11,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024535316,2026-06-05T15:39Z,,
-ollama,0.30.5,https://github.com/ollama/ollama/releases/tag/v0.30.5,15,14,https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716,2026-06-05T15:37Z,,
+ollama,0.30.7,https://github.com/ollama/ollama/releases/tag/v0.30.7,58,8,https://github.com/netanel-haber/dash-dash-help/actions/runs/27425885794,2026-06-12T15:46Z,1x RTX 3060,https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060
 tokenspeed,0.1.0@4df7c87,https://github.com/lightseekorg/tokenspeed/commit/4df7c87969b744fc8af62a59cfdc49f4439c30eb,601,207,https://github.com/netanel-haber/dash-dash-help/actions/runs/27348393122,2026-06-11T12:58Z,,
