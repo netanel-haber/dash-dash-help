@@ -15,8 +15,9 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
+from shlex import quote as shell_quote, split as shell_split
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote as url_quote
 from urllib.request import urlopen, urlretrieve
 
 ROOT = Path(__file__).parent
@@ -58,6 +59,10 @@ def log(msg: str) -> None:
     print(f"[work] {msg}", file=sys.stderr, flush=True)
 
 
+def q(value: object) -> str:
+    return shell_quote(str(value))
+
+
 @dataclass(frozen=True, kw_only=True)
 class Measurement:
     library: str
@@ -73,15 +78,27 @@ class Measurement:
 
 def read_measurements() -> list[Measurement]:
     assert MEASUREMENTS_CSV.is_file()
-    with open(MEASUREMENTS_CSV) as f:
-        return [
-            Measurement(**{key: row.get(key, "") for key in CSV_FIELDS})
-            for row in csv.DictReader(f)
-        ]
+    measurements = []
+    with MEASUREMENTS_CSV.open() as f:
+        for row in csv.DictReader(f):
+            measurements.append(
+                Measurement(
+                    library=row.get("library", ""),
+                    version=row.get("version", ""),
+                    version_url=row.get("version_url", ""),
+                    cold_ms=int(row.get("cold_ms") or 0),
+                    warm_ms=int(row.get("warm_ms") or 0),
+                    run_url=row.get("run_url", ""),
+                    last_updated=row.get("last_updated", ""),
+                    hardware=row.get("hardware", ""),
+                    hardware_url=row.get("hardware_url", ""),
+                )
+            )
+    return measurements
 
 
 def write_measurements(measurements: list[Measurement]) -> None:
-    with open(MEASUREMENTS_CSV, "w", newline="") as f:
+    with MEASUREMENTS_CSV.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_FIELDS, lineterminator="\n")
         writer.writeheader()
         writer.writerows(m.__dict__ for m in measurements)
@@ -89,9 +106,7 @@ def write_measurements(measurements: list[Measurement]) -> None:
 
 
 def rebuild_html() -> None:
-    measurements = sorted(
-        read_measurements(), key=lambda m: int(m.warm_ms), reverse=True
-    )
+    measurements = sorted(read_measurements(), key=lambda m: int(m.warm_ms), reverse=True)
 
     def css(ms):
         return "ok" if int(ms) < 1000 else "slow"
@@ -143,11 +158,7 @@ def update_readme() -> None:
         "| --- | --- | --- | --- | --- | --- |",
     ]
     for m in sorted(read_measurements(), key=lambda row: int(row.warm_ms), reverse=True):
-        hardware = (
-            f"[{m.hardware}]({m.hardware_url})"
-            if m.hardware and m.hardware_url
-            else m.hardware
-        )
+        hardware = f"[{m.hardware}]({m.hardware_url})" if m.hardware and m.hardware_url else m.hardware
         rows.append(
             f"| {m.library} "
             f"| [{m.cold_ms}ms]({m.run_url}) "
@@ -163,17 +174,11 @@ def update_readme() -> None:
     if not separator:
         sys.exit("README.md is missing dashdashhelp.win marker")
 
-    README.write_text(
-        before
-        + separator
-        + "\n"
-        + "\n".join(rows)
-        + "\n"
-    )
+    README.write_text(before + separator + "\n" + "\n".join(rows) + "\n")
 
 
 def git(*args: str, check: bool = True) -> int:
-    return run(["git", *args], check=check).returncode
+    return run("git " + " ".join(q(arg) for arg in args), check=check).returncode
 
 
 def git_commit_and_push(message: str) -> None:
@@ -198,15 +203,15 @@ def git_commit_and_push(message: str) -> None:
 
 
 def run(
-    command: list[str],
+    command: str,
     *,
     env: dict[str, str] | None = None,
     check: bool = True,
     capture: bool = False,
 ) -> subprocess.CompletedProcess[str]:
-    log("$ " + " ".join(command))
+    log("$ " + command)
     return subprocess.run(
-        command,
+        shell_split(command),
         capture_output=capture,
         check=check,
         env=env,
@@ -217,7 +222,7 @@ def run(
 def install_gpu_library(
     library: str,
     root: Path,
-) -> tuple[list[str], str, str, dict[str, str] | None]:
+) -> tuple[str, str, str, dict[str, str] | None]:
     safe_library = re.sub(r"[^A-Za-z0-9_.-]+", "-", library)
     venv = root / "venvs" / safe_library
     python = venv / "bin" / "python"
@@ -227,25 +232,18 @@ def install_gpu_library(
     if library == "vllm":
         with urlopen("https://api.github.com/repos/vllm-project/vllm/releases/latest") as f:
             tag = str(json.load(f)["tag_name"])
-        run(["uv", "venv", "--python", PYTHON, str(venv)], env=env)
+        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
         install_env = env | {"VLLM_USE_PRECOMPILED": "1"}
-        run([
-            "uv",
-            "pip",
-            "install",
-            "--python",
-            str(python),
-            f"vllm @ git+https://github.com/vllm-project/vllm.git@{tag}",
-            "--index-strategy",
-            "unsafe-best-match",
-        ], env=install_env)
-        version = run([
-            str(python),
-            "-c",
-            "from importlib.metadata import version; print(version('vllm'))",
-        ], capture=True).stdout.strip()
+        run(
+            f"uv pip install --python {q(python)} "
+            f"{q(f'vllm @ git+https://github.com/vllm-project/vllm.git@{tag}')} "
+            "--index-strategy unsafe-best-match",
+            env=install_env,
+        )
+        code = "from importlib.metadata import version; print(version('vllm'))"
+        version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
         return (
-            [str(venv / "bin" / "vllm"), "--help"],
+            f"{q(venv / 'bin' / 'vllm')} --help",
             version,
             f"https://github.com/vllm-project/vllm/releases/tag/{tag}",
             None,
@@ -256,30 +254,11 @@ def install_gpu_library(
             tag = str(json.load(f)["tag_name"])
         source = root / "src" / "sglang"
         shutil.rmtree(source, ignore_errors=True)
-        run([
-            "git",
-            "clone",
-            "--depth",
-            "1",
-            "--branch",
-            tag,
-            "https://github.com/sgl-project/sglang.git",
-            str(source),
-        ])
-        run(["uv", "venv", "--python", PYTHON, str(venv)], env=env)
-        run([
-            "uv",
-            "pip",
-            "install",
-            "--python",
-            str(python),
-            "--upgrade",
-            "pip",
-            "setuptools",
-            str(source / "python"),
-        ], env=env)
+        run(f"git clone --depth 1 --branch {q(tag)} https://github.com/sgl-project/sglang.git {q(source)}")
+        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+        run(f"uv pip install --python {q(python)} --upgrade pip setuptools {q(source / 'python')}", env=env)
         return (
-            [str(python), "-m", "sglang.launch_server", "--help"],
+            f"{q(python)} -m sglang.launch_server --help",
             tag,
             f"https://github.com/sgl-project/sglang/releases/tag/{tag}",
             None,
@@ -290,52 +269,23 @@ def install_gpu_library(
             tag = str(json.load(f)["tag_name"])
         source = root / "src" / "VLMEvalKit"
         shutil.rmtree(source, ignore_errors=True)
-        run([
-            "git",
-            "clone",
-            "--depth",
-            "1",
-            "--branch",
-            tag,
-            "https://github.com/open-compass/VLMEvalKit.git",
-            str(source),
-        ])
-        run(["uv", "venv", "--python", PYTHON, str(venv)], env=env)
-        run([
-            "uv",
-            "pip",
-            "install",
-            "--python",
-            str(python),
-            "-e",
-            str(source),
-        ], env=env)
+        run(f"git clone --depth 1 --branch {q(tag)} https://github.com/open-compass/VLMEvalKit.git {q(source)}")
+        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+        run(f"uv pip install --python {q(python)} -e {q(source)}", env=env)
         return (
-            [str(python), str(source / "run.py"), "--help"],
+            f"{q(python)} {q(source / 'run.py')} --help",
             tag,
             f"https://github.com/open-compass/VLMEvalKit/releases/tag/{tag}",
             None,
         )
 
     if library == "tensorrt-llm":
-        run(["uv", "venv", "--python", PYTHON, str(venv)], env=env)
-        run([
-            "uv",
-            "pip",
-            "install",
-            "--python",
-            str(python),
-            "tensorrt-llm",
-            "click",
-            "pynvml",
-        ], env=env)
-        version = run([
-            str(python),
-            "-c",
-            "from importlib.metadata import version; print(version('tensorrt-llm'))",
-        ], capture=True).stdout.strip()
+        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+        run(f"uv pip install --python {q(python)} tensorrt-llm click pynvml", env=env)
+        code = "from importlib.metadata import version; print(version('tensorrt-llm'))"
+        version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
         return (
-            [str(venv / "bin" / "trtllm-serve"), "--help"],
+            f"{q(venv / 'bin' / 'trtllm-serve')} --help",
             version,
             f"https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v{version}",
             None,
@@ -344,27 +294,14 @@ def install_gpu_library(
     if library == "tokenspeed":
         with urlopen("https://api.github.com/repos/lightseekorg/tokenspeed/commits/main") as f:
             commit = str(json.load(f)["sha"])
-        run(["uv", "venv", "--python", PYTHON, str(venv)], env=env)
-        run([
-            "uv",
-            "pip",
-            "install",
-            "--python",
-            str(python),
-            (
-                "tokenspeed @ "
-                f"git+https://github.com/lightseekorg/tokenspeed.git@{commit}"
-                "#subdirectory=python"
-            ),
-        ], env=env)
-        package_version = run([
-            str(python),
-            "-c",
-            "from importlib.metadata import version; print(version('tokenspeed'))",
-        ], capture=True).stdout.strip()
+        run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+        package_spec = f"tokenspeed @ git+https://github.com/lightseekorg/tokenspeed.git@{commit}#subdirectory=python"
+        run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
+        code = "from importlib.metadata import version; print(version('tokenspeed'))"
+        package_version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
         version = f"{package_version}@{commit[:7]}"
         return (
-            [str(venv / "bin" / "tokenspeed"), "--help"],
+            f"{q(venv / 'bin' / 'tokenspeed')} --help",
             version,
             f"https://github.com/lightseekorg/tokenspeed/commit/{commit}",
             None,
@@ -387,23 +324,20 @@ def install_gpu_library(
         shutil.rmtree(dest, ignore_errors=True)
         dest.mkdir(parents=True, exist_ok=True)
         urlretrieve(url, archive)
-        run(["tar", "-xzf", str(archive), "-C", str(dest), "--strip-components=1"])
+        run(f"tar -xzf {q(archive)} -C {q(dest)} --strip-components=1")
         return (
-            [str(dest / "llama-cli"), "--help"],
+            f"{q(dest / 'llama-cli')} --help",
             tag,
             f"https://github.com/ggml-org/llama.cpp/releases/tag/{tag}",
             None,
         )
 
     if library == "ollama":
-        run(["bash", "-lc", "curl -fsSL https://ollama.com/install.sh | sh"])
-        version = run([
-            "bash",
-            "-lc",
-            "ollama --version | grep -oP 'version is \\K[0-9.]+'",
-        ], capture=True).stdout.strip()
+        run(f"bash -lc {q('curl -fsSL https://ollama.com/install.sh | sh')}")
+        command = r"ollama --version | grep -oP 'version is \K[0-9.]+'"
+        version = run(f"bash -lc {q(command)}", capture=True).stdout.strip()
         return (
-            ["ollama", "--help"],
+            "ollama --help",
             version,
             f"https://github.com/ollama/ollama/releases/tag/v{version}",
             None,
@@ -447,16 +381,12 @@ def install_gpu_library(
 
     package_spec, executable, url_template = package_by_library[library]
     package = package_spec.split("==", 1)[0]
-    run(["uv", "venv", "--python", PYTHON, str(venv)], env=env)
-    run(["uv", "pip", "install", "--python", str(python), package_spec], env=env)
-    version = run([
-        str(python),
-        "-c",
-        "from importlib.metadata import version; import sys; print(version(sys.argv[1]))",
-        package,
-    ], capture=True).stdout.strip()
+    run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+    run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
+    code = "from importlib.metadata import version; import sys; print(version(sys.argv[1]))"
+    version = run(f"{q(python)} -c {q(code)} {q(package)}", capture=True).stdout.strip()
     return (
-        [str(venv / "bin" / executable), "--help"],
+        f"{q(venv / 'bin' / executable)} --help",
         version,
         url_template.format(version=version),
         None,
@@ -465,12 +395,12 @@ def install_gpu_library(
 
 def cmd_gpu_run(args: argparse.Namespace) -> None:
     if shutil.which("uv") is None:
-        run([sys.executable, "-m", "pip", "install", "--upgrade", "uv"])
-    run(["uv", "python", "install", PYTHON])
+        run(f"{q(sys.executable)} -m pip install --upgrade uv")
+    run(f"uv python install {PYTHON}")
     missing = [tool for tool in ("git", "curl", "tar") if shutil.which(tool) is None]
     if missing:
-        run(["apt", "update"])
-        run(["apt", "install", "-y", "--no-install-recommends", *missing])
+        run("apt update")
+        run("apt install -y --no-install-recommends " + " ".join(q(tool) for tool in missing))
 
     root = Path(args.root)
     root.mkdir(parents=True, exist_ok=True)
@@ -483,11 +413,11 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
         if unknown:
             sys.exit(f"Unknown GPU libraries: {', '.join(unknown)}")
     workers = max(1, min(len(libraries), os.cpu_count() or 1))
-    installs: dict[str, tuple[list[str], str, str, dict[str, str] | None]] = {}
+    installs: dict[str, tuple[str, str, str, dict[str, str] | None]] = {}
     results: list[dict[str, Any]] = []
     failures: list[dict[str, str]] = []
 
-    def install(library: str) -> tuple[list[str], str, str, dict[str, str] | None]:
+    def install(library: str) -> tuple[str, str, str, dict[str, str] | None]:
         log(f"=== install {library} ===")
         return install_gpu_library(library, root)
 
@@ -510,11 +440,11 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
             times: list[int] = []
             for i in range(11):
                 start = time.perf_counter_ns()
-                proc = subprocess.run(
+                proc = run(
                     command,
-                    capture_output=True,
+                    capture=True,
                     env=command_env,
-                    text=True,
+                    check=False,
                 )
                 elapsed_ms = (time.perf_counter_ns() - start) // 1_000_000
                 if proc.returncode != 0:
@@ -524,14 +454,16 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
                 times.append(elapsed_ms)
                 log(f"  Run {i + 1}/11: {elapsed_ms}ms")
 
-            results.append({
-                "library": library,
-                "version": version,
-                "version_url": version_url,
-                "cold_ms": times[0],
-                "warm_ms": sum(times[1:]) // 10,
-                "times": times,
-            })
+            results.append(
+                {
+                    "library": library,
+                    "version": version,
+                    "version_url": version_url,
+                    "cold_ms": times[0],
+                    "warm_ms": sum(times[1:]) // 10,
+                    "times": times,
+                }
+            )
         except Exception as exc:
             failures.append({"library": library, "error": str(exc)})
             log(f"{library} failed: {exc}")
@@ -544,36 +476,26 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
             shutil.rmtree(root / "llama-bin", ignore_errors=True)
             (root / "llama.tar.gz").unlink(missing_ok=True)
 
-    Path(args.output).write_text(
-        json.dumps({"results": results, "failures": failures}, indent=2)
-    )
+    Path(args.output).write_text(json.dumps({"results": results, "failures": failures}, indent=2))
     log(f"Wrote GPU results to {args.output}")
 
 
 def cmd_vast_rent(args: argparse.Namespace) -> None:
     public_key = Path(args.ssh_public_key).read_text(encoding="utf-8").strip()
-    proc = run(["vastai", "create", "ssh-key", public_key, "-y"], capture=True)
+    proc = run(f"vastai create ssh-key {q(public_key)} -y", capture=True)
     if proc.stdout.strip():
         print(proc.stdout.strip())
     if proc.stderr.strip():
         print(proc.stderr.strip(), file=sys.stderr)
 
     query = f"{args.query} dph<={args.max_price}"
-    offers = json.loads(run([
-        "vastai",
-        "--raw",
-        "search",
-        "offers",
-        "--type",
-        "on-demand",
-        query,
-        "--storage",
-        args.disk_gb,
-        "--limit",
-        str(args.limit),
-        "-o",
-        "dph",
-    ], capture=True).stdout)
+    offers = json.loads(
+        run(
+            f"vastai --raw search offers --type on-demand {q(query)} "
+            f"--storage {q(args.disk_gb)} --limit {args.limit} -o dph",
+            capture=True,
+        ).stdout
+    )
     if not isinstance(offers, list):
         raise TypeError(f"Expected Vast offer list, got {type(offers).__name__}")
     offers.sort(key=lambda offer: float(offer.get("dph_total") or offer.get("dph") or "inf"))
@@ -590,26 +512,13 @@ def cmd_vast_rent(args: argparse.Namespace) -> None:
         if not offer_id or price is None:
             continue
 
-        log(
-            f"Trying on-demand offer {offer_id}: "
-            f"{offer.get('gpu_name', 'unknown GPU')}, price={price}"
+        log(f"Trying on-demand offer {offer_id}: {offer.get('gpu_name', 'unknown GPU')}, price={price}")
+        proc = run(
+            f"vastai --raw create instance {q(offer_id)} --image {q(args.image)} "
+            f"--disk {q(args.disk_gb)} --ssh --direct --cancel-unavail --label {q(args.label)}",
+            capture=True,
+            check=False,
         )
-        proc = run([
-            "vastai",
-            "--raw",
-            "create",
-            "instance",
-            offer_id,
-            "--image",
-            args.image,
-            "--disk",
-            args.disk_gb,
-            "--ssh",
-            "--direct",
-            "--cancel-unavail",
-            "--label",
-            args.label,
-        ], capture=True, check=False)
         if proc.stdout.strip():
             print(proc.stdout.strip())
         if proc.stderr.strip():
@@ -643,19 +552,11 @@ def cmd_vast_rent(args: argparse.Namespace) -> None:
 def cmd_vast_wait(args: argparse.Namespace) -> None:
     info: dict[str, Any] = {}
     for _ in range(args.status_attempts):
-        info = json.loads(
-            run(["vastai", "--raw", "show", "instance", args.instance_id], capture=True)
-            .stdout
-        )
+        info = json.loads(run(f"vastai --raw show instance {q(args.instance_id)}", capture=True).stdout)
         print(json.dumps(info, indent=2))
         host = str(info.get("public_ipaddr") or "")
         port = str(info.get("ports", {}).get("22/tcp", [{}])[0].get("HostPort") or "")
-        if (
-            info.get("actual_status") == "running"
-            and info.get("intended_status") == "running"
-            and host
-            and port
-        ):
+        if info.get("actual_status") == "running" and info.get("intended_status") == "running" and host and port:
             break
         time.sleep(10)
 
@@ -666,23 +567,12 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
         sys.exit("Vast instance is missing direct SSH target")
 
     for _ in range(args.ssh_attempts):
-        proc = subprocess.run([
-            "ssh",
-            "-i",
-            args.ssh_private_key,
-            "-p",
-            port,
-            "-o",
-            "IdentitiesOnly=yes",
-            "-o",
-            "StrictHostKeyChecking=no",
-            "-o",
-            "UserKnownHostsFile=/dev/null",
-            "-o",
-            "ConnectTimeout=10",
-            f"root@{host}",
-            "echo ok",
-        ])
+        proc = run(
+            f"ssh -i {q(args.ssh_private_key)} -p {q(port)} -o IdentitiesOnly=yes "
+            "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
+            f"-o ConnectTimeout=10 {q(f'root@{host}')} echo ok",
+            check=False,
+        )
         if proc.returncode == 0:
             github_output = os.environ.get("GITHUB_OUTPUT")
             if github_output:
@@ -700,14 +590,11 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
 
 def cmd_gpu_update(args: argparse.Namespace) -> None:
     payload = json.loads(Path(args.results).read_text())
-    info = json.loads(
-        run(["vastai", "--raw", "show", "instance", args.instance_id], capture=True)
-        .stdout
-    )
+    info = json.loads(run(f"vastai --raw show instance {q(args.instance_id)}", capture=True).stdout)
     gpu_count = int(info.get("num_gpus") or info.get("gpu_count") or 1)
     gpu_name = str(info.get("gpu_name") or "unknown GPU")
     hardware = f"{gpu_count}x {gpu_name}"
-    hardware_url = f"{VAST_HARDWARE_URL}{quote(f'gpu_name={gpu_name}')}"
+    hardware_url = f"{VAST_HARDWARE_URL}{url_quote(f'gpu_name={gpu_name}')}"
     measurements = read_measurements()
     run_url = (
         f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/"
@@ -749,10 +636,7 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
 
 def main() -> None:
     if len(sys.argv) == 1:
-        sys.exit(
-            "usage: work.py {gpu-run,gpu-update,rebuild,"
-            "vast-destroy,vast-rent,vast-wait}"
-        )
+        sys.exit("usage: work.py {gpu-run,gpu-update,rebuild,vast-destroy,vast-rent,vast-wait}")
     command = sys.argv[1]
     p = argparse.ArgumentParser()
 
@@ -777,7 +661,7 @@ def main() -> None:
     if command == "vast-destroy":
         p.add_argument("--instance-id", required=True)
         args = p.parse_args(sys.argv[2:])
-        run(["vastai", "destroy", "instance", args.instance_id, "-y"])
+        run(f"vastai destroy instance {q(args.instance_id)} -y")
         return
 
     if command == "vast-rent":
