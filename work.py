@@ -42,8 +42,6 @@ class Measurement:
     last_updated: str
     hardware: str = ""
     hardware_url: str = ""
-    gpu_seconds: str = ""
-    gpu_cost_usd: str = ""
 
 
 def read_measurements() -> list[Measurement]:
@@ -84,8 +82,6 @@ def rebuild_html() -> None:
           <th scope="col">warm (10 runs)</th>
           <th scope="col">version</th>
           <th scope="col">hardware</th>
-          <th scope="col">gpu time</th>
-          <th scope="col">gpu cost</th>
           <th scope="col">measured on</th>
         </tr>
       </thead>"""
@@ -95,16 +91,12 @@ def rebuild_html() -> None:
         hardware = escape(m.hardware) if m.hardware else ""
         if hardware and m.hardware_url:
             hardware = f'<a href="{escape(m.hardware_url)}">{hardware}</a>'
-        gpu_seconds = f"{m.gpu_seconds}s" if m.gpu_seconds else ""
-        gpu_cost = f"${m.gpu_cost_usd}" if m.gpu_cost_usd else ""
         rows.append(
             f'<tr id="{m.library}"><td><code>{m.library} --help</code></td>'
             f'<td class="{css(m.cold_ms)}"><a href="{m.run_url}">{m.cold_ms}ms</a></td>'
             f'<td class="{css(m.warm_ms)}"><a href="{m.run_url}">{m.warm_ms}ms</a></td>'
             f'<td><a href="{m.version_url}">{escape(m.version)}</a></td>'
             f"<td>{hardware}</td>"
-            f"<td>{escape(gpu_seconds)}</td>"
-            f"<td>{escape(gpu_cost)}</td>"
             f"<td>{escape(m.last_updated)}</td></tr>"
         )
     html = re.sub(
@@ -126,11 +118,8 @@ def rebuild_html() -> None:
 
 def update_readme() -> None:
     rows = [
-        (
-            "| library | cold | warm (10 runs) | version | hardware "
-            "| gpu time | gpu cost | measured on |"
-        ),
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| library | cold | warm (10 runs) | version | hardware | measured on |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
     for m in sorted(read_measurements(), key=lambda row: int(row.warm_ms), reverse=True):
         hardware = (
@@ -138,16 +127,12 @@ def update_readme() -> None:
             if m.hardware and m.hardware_url
             else m.hardware
         )
-        gpu_seconds = f"{m.gpu_seconds}s" if m.gpu_seconds else ""
-        gpu_cost = f"${m.gpu_cost_usd}" if m.gpu_cost_usd else ""
         rows.append(
             f"| {m.library} "
             f"| [{m.cold_ms}ms]({m.run_url}) "
             f"| [{m.warm_ms}ms]({m.run_url}) "
             f"| [{m.version}]({m.version_url}) "
             f"| {hardware} "
-            f"| {gpu_seconds} "
-            f"| {gpu_cost} "
             f"| {m.last_updated} |"
         )
 
@@ -502,11 +487,9 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
     results: list[dict[str, Any]] = []
     failures: list[dict[str, str]] = []
 
-    def install(library: str) -> tuple[list[str], str, str, dict[str, str] | None, int]:
-        started = time.time()
+    def install(library: str) -> tuple[list[str], str, str, dict[str, str] | None]:
         log(f"=== install {library} ===")
-        command, version, version_url, command_env = install_gpu_library(library, root)
-        return command, version, version_url, command_env, max(0, int(time.time() - started))
+        return install_gpu_library(library, root)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(install, library): library for library in libraries}
@@ -521,8 +504,7 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
     for library in libraries:
         if library not in installs:
             continue
-        command, version, version_url, command_env, install_seconds = installs[library]
-        started = time.time()
+        command, version, version_url, command_env = installs[library]
         try:
             log(f"=== benchmark {library} ===")
             times: list[int] = []
@@ -548,7 +530,6 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
                 "version_url": version_url,
                 "cold_ms": times[0],
                 "warm_ms": sum(times[1:]) // 10,
-                "gpu_seconds": str(install_seconds + max(0, int(time.time() - started))),
                 "times": times,
             })
         except Exception as exc:
@@ -726,24 +707,12 @@ def cmd_vast_metadata(args: argparse.Namespace) -> None:
         run(["vastai", "--raw", "show", "instance", args.instance_id], capture=True)
         .stdout
     )
-    now = time.time()
-    start = float(info.get("start_date") or now)
-    seconds = max(0, int(now - start))
-    hourly = float(
-        info.get("dph_total")
-        or info.get("discounted_dph_total")
-        or info.get("dph")
-        or 0
-    )
     gpu_count = int(info.get("num_gpus") or info.get("gpu_count") or 1)
     gpu_name = str(info.get("gpu_name") or "unknown GPU")
     print(json.dumps({
         "hardware": f"{gpu_count}x {gpu_name}",
         "hardware_url": f"{VAST_HARDWARE_URL}{quote(f'gpu_name={gpu_name}')}",
-        "gpu_seconds": str(seconds),
-        "gpu_cost_usd": f"{hourly * seconds / 3600:.4f}",
         "vast_instance_id": args.instance_id,
-        "vast_hourly_usd": hourly,
     }, indent=2))
 
 
@@ -758,9 +727,6 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
     )
 
     for result in payload.get("results", []):
-        seconds = str(result.get("gpu_seconds") or metadata.get("gpu_seconds") or "")
-        hourly = float(metadata.get("vast_hourly_usd") or 0)
-        cost = f"{hourly * int(seconds) / 3600:.4f}" if seconds else ""
         measurement = Measurement(
             library=result["library"],
             version=str(result["version"]),
@@ -771,8 +737,6 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
             last_updated=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
             hardware=str(metadata.get("hardware", "")),
             hardware_url=str(metadata.get("hardware_url", "")),
-            gpu_seconds=seconds,
-            gpu_cost_usd=cost or str(metadata.get("gpu_cost_usd", "")),
         )
         idx = next(
             (i for i, row in enumerate(measurements) if row.library == measurement.library),

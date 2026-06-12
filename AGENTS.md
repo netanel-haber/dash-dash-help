@@ -35,13 +35,13 @@ Do not hand-edit generated benchmark rows in `index.html` or `README.md` as the 
 CSV fields:
 
 ```text
-library,version,version_url,cold_ms,warm_ms,run_url,last_updated,hardware,hardware_url,gpu_seconds,gpu_cost_usd
+library,version,version_url,cold_ms,warm_ms,run_url,last_updated,hardware,hardware_url
 ```
 
 Dashboard columns:
 
 ```text
-library | cold | warm (10 runs) | version | hardware | gpu time | gpu cost | measured on
+library | cold | warm (10 runs) | version | hardware | measured on
 ```
 
 - `cold_ms`: first run.
