@@ -11,17 +11,38 @@ on:
         description: "Vast search query"
         required: true
         default: "gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=12.1 reliability>0.90 inet_down>50 direct_port_count>=1 rented=false verified=true"
+      destroy_instance_id:
+        description: "Optional Vast instance ID to destroy instead of benchmarking"
+        required: false
+        default: ""
+
+env:
+  VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
+  VAST_DISK_GB: "100"
+  VAST_IMAGE: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
 
 jobs:
+  cleanup:
+    if: ${{ inputs.destroy_instance_id != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Vast CLI
+        run: |
+          test -n "$VAST_API_KEY"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          uv tool install vastai
+          export PATH="$HOME/.local/bin:$PATH"
+          vastai --version
+      - name: Destroy Vast instance
+        run: vastai destroy instance "${{ inputs.destroy_instance_id }}" -y
+
   bench:
+    if: ${{ inputs.destroy_instance_id == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
       contents: write
-    env:
-      VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
-      VAST_DISK_GB: "100"
-      VAST_IMAGE: pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -108,7 +129,7 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           uv venv --python python3 /root/vllm-venv
           uv pip install --python /root/vllm-venv/bin/python vllm
-          version=$(/root/vllm-venv/bin/python -m pip show vllm | awk '/^Version:/ {print $2}')
+          version=$(/root/vllm-venv/bin/python -c 'from importlib.metadata import version; print(version("vllm"))')
           /root/vllm-venv/bin/python - "$version" <<'PY' > /tmp/vllm_result.json
           import json
           import subprocess
@@ -145,7 +166,7 @@ jobs:
       - name: Destroy Vast instance
         if: always() && steps.rent.outputs.instance_id != ''
         run: |
-          vastai destroy instance "${{ steps.rent.outputs.instance_id }}" || true
+          vastai destroy instance "${{ steps.rent.outputs.instance_id }}" -y || true
 
       - name: Update dashboard
         if: steps.remote_benchmark.outcome == 'success'
