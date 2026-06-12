@@ -57,6 +57,18 @@
       height: 20px;
     }
 
+    .banner {
+      border: 1px solid #8bc34a;
+      border-left-width: 4px;
+      margin: 1.2em 0;
+      padding: 0.7em 0.9em;
+      background: #f6fff0;
+    }
+
+    .banner p {
+      margin: 0;
+    }
+
     @media (prefers-color-scheme: dark) {
       body {
         background: #1a1a1a;
@@ -75,6 +87,11 @@
       .ok {
         color: #51cf66;
       }
+
+      .banner {
+        background: #182414;
+        border-color: #51cf66;
+      }
     }
   </style>
 </head>
@@ -91,6 +108,12 @@
   </div>
   <p>Let's help help help devs.</p>
   <p>Target: &lt;1000ms. Several important LLM CLI tools take multiple seconds. PRs welcome ❤️</p>
+  <div class="banner">
+    <p>
+      First upstream &lt;1s attempt:
+      <a href="https://github.com/vllm-project/vllm/pull/41518">vLLM PR #41518</a>.
+    </p>
+  </div>
 
     <table id="bench">
       <thead>
