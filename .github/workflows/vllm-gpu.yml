@@ -93,13 +93,11 @@ jobs:
           test "$actual_status" = "running"
           test "$intended_status" = "running"
 
-          ssh_url=$(vastai ssh-url "$instance_id" | tail -n1)
-          echo "$ssh_url"
-          host_port=${ssh_url#ssh://root@}
-          host=${host_port%:*}
-          port=${host_port##*:}
+          host=$(echo "$info" | jq -r '.ssh_host // .public_ipaddr // empty')
+          port=$(echo "$info" | jq -r '.ssh_port // .ports["22/tcp"][0].HostPort // empty')
           test -n "$host"
           test -n "$port"
+          echo "SSH target: root@$host:$port"
 
           key="${{ steps.ssh_key.outputs.private }}"
           for _ in $(seq 1 60); do
