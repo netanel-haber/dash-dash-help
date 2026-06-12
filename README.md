@@ -8,9 +8,9 @@ https://dashdashhelp.win
 
 | library | cold | warm (10 runs) | version | hardware | gpu time | gpu cost | measured on |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| vllm | [21829ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27422517342) | [8882ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27422517342) | [0.22.1+precompiled](https://github.com/vllm-project/vllm/releases/tag/v0.22.1) | [1x RTX 3060](https://cloud.vast.ai/instances/40715981) | 303s | $0.0066 | 2026-06-12T14:42Z |
 | VLMEvalKit | [15757ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024947957) | [6397ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024947957) | [v0.2](https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2) |  |  |  | 2026-06-05T15:50Z |
 | sglang | [28834ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024732605) | [5252ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024732605) | [v0.5.12.post1](https://github.com/sgl-project/sglang/releases/tag/v0.5.12.post1) |  |  |  | 2026-06-05T15:45Z |
-| vllm | [10686ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27414541402) | [4671ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27414541402) | [0.22.1](https://github.com/vllm-project/vllm/releases/tag/v0.22.1) |  |  |  | 2026-06-12T12:08Z |
 | tensorrt-llm | [6722ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024612193) | [2109ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024612193) | [1.2.1](https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.2.1) |  |  |  | 2026-06-05T15:43Z |
 | datasets | [3092ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024437557) | [788ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024437557) | [5.0.0](https://github.com/huggingface/datasets/releases/tag/5.0.0) |  |  |  | 2026-06-05T15:38Z |
 | llm | [1399ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024470497) | [618ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024470497) | [0.31](https://github.com/simonw/llm/releases/tag/0.31) |  |  |  | 2026-06-05T15:38Z |
@@ -23,4 +23,4 @@ https://dashdashhelp.win
 | llama.cpp | [14ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024535316) | [11ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024535316) | [b9529](https://github.com/ggml-org/llama.cpp/releases/tag/b9529) |  |  |  | 2026-06-05T15:39Z |
 | transformers | [1ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024583058) | [0ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024583058) | [5.10.2](https://github.com/huggingface/transformers/releases/tag/v5.10.2) |  |  |  | 2026-06-05T15:41Z |
 
-Last updated: 2026-06-12 14:02 UTC
+Last updated: 2026-06-12 14:42 UTC
