@@ -3,8 +3,8 @@ name: vllm Vast GPU --help
 on:
   workflow_dispatch:
     inputs:
-      max_bid_price:
-        description: "Max interruptible bid $/hour"
+      max_price:
+        description: "Max GPU price $/hour"
         required: true
         default: "0.10"
       offer_query:
@@ -48,31 +48,13 @@ jobs:
       - name: Rent Vast instance
         id: rent
         run: |
-          query="${{ inputs.offer_query }} min_bid<=${{ inputs.max_bid_price }}"
-          offers=$(vastai --raw search offers --type bid "$query" --storage "$VAST_DISK_GB" --limit 5 -o min_bid)
-          echo "$offers" | jq .
-
-          offer_id=$(echo "$offers" | jq -r '.[0].id // empty')
-          bid_price=$(echo "$offers" | jq -r '.[0].min_bid // empty')
-          test -n "$offer_id"
-          test -n "$bid_price"
-          echo "Selected interruptible offer $offer_id at min_bid=$bid_price"
-
-          create=$(vastai --raw create instance "$offer_id" \
+          python3 .github/scripts/rent_vast_instance.py \
+            --query "${{ inputs.offer_query }}" \
+            --max-price "${{ inputs.max_price }}" \
+            --disk-gb "$VAST_DISK_GB" \
             --image "$VAST_IMAGE" \
-            --disk "$VAST_DISK_GB" \
-            --bid_price "$bid_price" \
-            --ssh \
-            --direct \
-            --cancel-unavail \
-            --label "dash-dash-help-vllm-${GITHUB_RUN_ID}")
-          echo "$create" | jq .
-
-          instance_id=$(echo "$create" | jq -r '.new_contract // empty')
-          test -n "$instance_id"
-          echo "instance_id=$instance_id" >> "$GITHUB_OUTPUT"
-
-          vastai attach ssh "$instance_id" "$(cat "${{ steps.ssh_key.outputs.public }}")"
+            --label "dash-dash-help-vllm-${GITHUB_RUN_ID}" \
+            --ssh-public-key "${{ steps.ssh_key.outputs.public }}"
 
       - name: Wait for SSH
         id: ssh
