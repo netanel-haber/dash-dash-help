@@ -8,7 +8,7 @@ https://dashdashhelp.win
 
 | library | cold | warm (10 runs) | version | hardware | measured on |
 | --- | --- | --- | --- | --- | --- |
-| vllm | [21829ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27422517342) | [8882ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27422517342) | [0.22.1+precompiled](https://github.com/vllm-project/vllm/releases/tag/v0.22.1) | [1x RTX 3060](https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060) | 2026-06-12T14:42Z |
+| vllm | [18126ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27425289428) | [8169ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27425289428) | [0.22.1+precompiled](https://github.com/vllm-project/vllm/releases/tag/v0.22.1) | [1x RTX 3060](https://cloud.vast.ai/create/?q=gpu_name%3DRTX%203060) | 2026-06-12T15:31Z |
 | VLMEvalKit | [15757ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024947957) | [6397ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024947957) | [v0.2](https://github.com/open-compass/VLMEvalKit/releases/tag/v0.2) |  | 2026-06-05T15:50Z |
 | sglang | [28834ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024732605) | [5252ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024732605) | [v0.5.12.post1](https://github.com/sgl-project/sglang/releases/tag/v0.5.12.post1) |  | 2026-06-05T15:45Z |
 | tensorrt-llm | [6722ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024612193) | [2109ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024612193) | [1.2.1](https://github.com/NVIDIA/TensorRT-LLM/releases/tag/v1.2.1) |  | 2026-06-05T15:43Z |
