@@ -130,7 +130,14 @@ def bench(command: str, runs: int = 11) -> tuple[int, int]:
 
 def cmd_bench(args: argparse.Namespace) -> None:
     log(f"=== {args.library}: {args.command} ===")
-    cold_ms, warm_ms = bench(args.command)
+    if (args.cold_ms is None) != (args.warm_ms is None):
+        sys.exit("--cold-ms and --warm-ms must be passed together")
+
+    if args.cold_ms is not None and args.warm_ms is not None:
+        cold_ms, warm_ms = args.cold_ms, args.warm_ms
+        log(f"Using recorded timings: {cold_ms=}, {warm_ms=}")
+    else:
+        cold_ms, warm_ms = bench(args.command)
 
     if args.dry_run:
         return log("DRY RUN: Skipping update")
@@ -156,6 +163,8 @@ def main() -> None:
     p.add_argument("--library", required=True)
     p.add_argument("--version", required=True)
     p.add_argument("--version-url", required=True)
+    p.add_argument("--cold-ms", type=int)
+    p.add_argument("--warm-ms", type=int)
     p.add_argument("--dry-run", action="store_true")
     cmd_bench(p.parse_args())
 

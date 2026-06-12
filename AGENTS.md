@@ -28,7 +28,6 @@ Repo: `https://github.com/netanel-haber/dash-dash-help`
 - `update_readme.py`: README table rebuild from `measurements.csv`.
 - `.nojekyll`: keep GitHub Pages from applying Jekyll.
 - `CNAME`: custom domain.
-- `.cirun.yml`: temporary Cirun GPU runner config for the vLLM GPU trial.
 
 Do not hand-edit generated benchmark rows in `index.html` or `README.md` as the primary data change. Update `measurements.csv` or run the benchmark flow, then regenerate.
 
@@ -77,6 +76,7 @@ Use `--dry-run` locally unless intentionally committing and pushing.
 - `work.py` defaults to 11 runs.
 - Cold time is run 1.
 - Warm time is the integer average of runs 2-11.
+- `work.py --cold-ms --warm-ms` records externally measured timings instead of benchmarking locally.
 - `work.py` captures output but does not fail on a non-zero benchmark command.
 - Verify suspicious `0ms` or `1ms` results; they often mean the command failed fast.
 - Commit format is currently `{library}: cold_ms={cold}/warm_ms={warm} @ {version}`.
@@ -88,7 +88,7 @@ Use `--dry-run` locally unless intentionally committing and pushing.
 - Benchmark workflows are manual only: `workflow_dispatch`.
 - `update-readme.yml` is the only scheduled workflow: daily `0 0 * * *`.
 - `all.yml` manually triggers benchmark workflows sequentially and watches each run.
-- `vllm-gpu.yml` is a temporary manual Cirun trial. It updates the existing `vllm` row, not a `vllm-gpu` row.
+- `vllm-gpu.yml` is a temporary manual Vast.ai trial. It updates the existing `vllm` row, not a `vllm-gpu` row.
 - Benchmark jobs need `contents: write`.
 - `all.yml` needs `actions: write`.
 - Use `astral-sh/setup-uv` and `uv` for Python package workflows.
@@ -128,7 +128,7 @@ ollama hf datasets llm openai langchain-cli llama-cpp lm-eval transformers token
 - `tokenspeed`: install from the latest `lightseekorg/tokenspeed` `main` commit, subdirectory `python`, with `--torch-backend cpu`; version URL points to the exact commit.
 - `llama.cpp`: download latest GitHub release binary tarball; no `uv`.
 - `vllm`: install latest release tag from GitHub with `VLLM_TARGET_DEVICE=cpu`, `VLLM_USE_PRECOMPILED=1`, `--index-strategy unsafe-best-match`, and PyTorch CPU extra index.
-- `vllm-gpu`: temporary Cirun/Vast.ai workflow. It uses runner label `cirun-vllm-gpu--${{ github.run_id }}`, installs PyPI `vllm`, probes with `nvidia-smi`, and writes to library `vllm`.
+- `vllm-gpu`: temporary direct Vast.ai workflow. It requires GitHub secret `VAST_API_KEY`, uses `vastai` CLI, rents the cheapest matching interruptible NVIDIA Turing-or-newer GPU under the dispatch-time max bid $/hour, benchmarks remotely, destroys the instance, then records timings locally.
 - `vllm-experimental`: dry-run only; benchmarks `python3 -m vllm.hello` from a specific fork commit and does not update data.
 - `VLMEvalKit`: clone latest release tag and install from source with `uv pip install -e .`.
 - `tensorrt-llm`: free disk space first; install `tensorrt-llm`, `click`, and `pynvml`; benchmark `trtllm-serve --help`, not `trtllm --help`.
