@@ -86,8 +86,28 @@ jobs:
             "root@${{ steps.ssh.outputs.host }}" \
             'python3 -m pip install --upgrade uv &&
              export PATH="$HOME/.local/bin:$PATH" &&
+             export UV_CACHE_DIR=/root/dashdashhelp-gpu/uv-cache &&
              uv python install 3.12 &&
-             uv run --no-project --python 3.12 python /root/work.py gpu-run --libraries "${{ inputs.libraries }}" --output /tmp/dashdashhelp-gpu-results.json'
+             uv run --no-project --with tqdm --python 3.12 python /root/work.py gpu-run --libraries "${{ inputs.libraries }}" --output /tmp/dashdashhelp-gpu-results.json'
+
+      - name: Fetch install logs
+        if: always() && steps.ssh.outputs.host != ''
+        run: |
+          logs="$RUNNER_TEMP/dashdashhelp-gpu-logs"
+          mkdir -p "$logs"
+          scp -r -i "${{ steps.ssh_key.outputs.private }}" \
+            -P "${{ steps.ssh.outputs.port }}" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            "root@${{ steps.ssh.outputs.host }}:/root/dashdashhelp-gpu/logs/." "$logs/" || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gpu-install-logs-${{ github.run_id }}
+          path: ${{ runner.temp }}/dashdashhelp-gpu-logs
+          if-no-files-found: ignore
 
       - name: Fetch results
         id: results

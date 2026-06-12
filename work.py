@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
@@ -208,8 +208,21 @@ def run(
     env: dict[str, str] | None = None,
     check: bool = True,
     capture: bool = False,
+    log_file: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     log("$ " + command)
+    if log_file:
+        with log_file.open("a", encoding="utf-8", errors="replace") as f:
+            print(f"$ {command}", file=f, flush=True)
+            return subprocess.run(
+                shell_split(command),
+                check=check,
+                env=env,
+                stderr=subprocess.STDOUT,
+                stdout=f,
+                text=True,
+            )
+
     return subprocess.run(
         shell_split(command),
         capture_output=capture,
@@ -222,6 +235,7 @@ def run(
 def install_gpu_library(
     library: str,
     root: Path,
+    log_file: Path | None = None,
 ) -> tuple[str, str, str, dict[str, str] | None]:
     safe_library = re.sub(r"[^A-Za-z0-9_.-]+", "-", library)
     venv = root / "venvs" / safe_library
@@ -233,13 +247,14 @@ def install_gpu_library(
         case "vllm":
             with urlopen("https://api.github.com/repos/vllm-project/vllm/releases/latest") as f:
                 tag = str(json.load(f)["tag_name"])
-            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
             install_env = env | {"VLLM_USE_PRECOMPILED": "1"}
             run(
                 f"uv pip install --python {q(python)} "
                 f"{q(f'vllm @ git+https://github.com/vllm-project/vllm.git@{tag}')} "
                 "--index-strategy unsafe-best-match",
                 env=install_env,
+                log_file=log_file,
             )
             code = "from importlib.metadata import version; print(version('vllm'))"
             version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
@@ -252,15 +267,14 @@ def install_gpu_library(
         case "sglang":
             with urlopen("https://api.github.com/repos/sgl-project/sglang/releases/latest") as f:
                 tag = str(json.load(f)["tag_name"])
-            source = root / "src" / "sglang"
-            shutil.rmtree(source, ignore_errors=True)
-            run(f"git clone --depth 1 --branch {q(tag)} https://github.com/sgl-project/sglang.git {q(source)}")
-            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-            run(f"uv pip install --python {q(python)} --upgrade pip setuptools {q(source / 'python')}", env=env)
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
+            run(f"uv pip install --python {q(python)} sglang", env=env, log_file=log_file)
+            code = "from importlib.metadata import version; print(version('sglang'))"
+            version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
             return (
                 f"{q(python)} -m sglang.launch_server --help",
-                tag,
-                f"https://github.com/sgl-project/sglang/releases/tag/{tag}",
+                version,
+                f"https://github.com/sgl-project/sglang/releases/tag/v{version}",
                 None,
             )
         case "VLMEvalKit":
@@ -268,9 +282,12 @@ def install_gpu_library(
                 tag = str(json.load(f)["tag_name"])
             source = root / "src" / "VLMEvalKit"
             shutil.rmtree(source, ignore_errors=True)
-            run(f"git clone --depth 1 --branch {q(tag)} https://github.com/open-compass/VLMEvalKit.git {q(source)}")
-            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-            run(f"uv pip install --python {q(python)} -e {q(source)}", env=env)
+            run(
+                f"git clone --depth 1 --branch {q(tag)} https://github.com/open-compass/VLMEvalKit.git {q(source)}",
+                log_file=log_file,
+            )
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
+            run(f"uv pip install --python {q(python)} -e {q(source)}", env=env, log_file=log_file)
             return (
                 f"{q(python)} {q(source / 'run.py')} --help",
                 tag,
@@ -278,8 +295,8 @@ def install_gpu_library(
                 None,
             )
         case "tensorrt-llm":
-            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-            run(f"uv pip install --python {q(python)} tensorrt-llm click pynvml", env=env)
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
+            run(f"uv pip install --python {q(python)} tensorrt-llm click pynvml", env=env, log_file=log_file)
             code = "from importlib.metadata import version; print(version('tensorrt-llm'))"
             version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
             return (
@@ -289,13 +306,12 @@ def install_gpu_library(
                 None,
             )
         case "tokenspeed":
-            with urlopen("https://api.github.com/repos/lightseekorg/tokenspeed/commits/main") as f:
-                commit = str(json.load(f)["sha"])
-            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
+            commit = "4df7c87969b744fc8af62a59cfdc49f4439c30eb"
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
             package_spec = (
                 f"tokenspeed @ git+https://github.com/lightseekorg/tokenspeed.git@{commit}#subdirectory=python"
             )
-            run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
+            run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env, log_file=log_file)
             code = "from importlib.metadata import version; print(version('tokenspeed'))"
             package_version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
             version = f"{package_version}@{commit[:7]}"
@@ -322,15 +338,15 @@ def install_gpu_library(
             shutil.rmtree(dest, ignore_errors=True)
             dest.mkdir(parents=True, exist_ok=True)
             urlretrieve(url, archive)
-            run(f"tar -xzf {q(archive)} -C {q(dest)} --strip-components=1")
+            run(f"tar -xzf {q(archive)} -C {q(dest)} --strip-components=1", log_file=log_file)
             return (
                 f"{q(dest / 'llama-cli')} --help",
                 tag,
                 f"https://github.com/ggml-org/llama.cpp/releases/tag/{tag}",
-                None,
+                env | {"LD_LIBRARY_PATH": str(dest)},
             )
         case "ollama":
-            run(f"bash -lc {q('curl -fsSL https://ollama.com/install.sh | sh')}")
+            run(f"bash -lc {q('curl -fsSL https://ollama.com/install.sh | sh')}", log_file=log_file)
             command = r"ollama --version | grep -oP 'version is \K[0-9.]+'"
             version = run(f"bash -lc {q(command)}", capture=True).stdout.strip()
             return (
@@ -343,7 +359,7 @@ def install_gpu_library(
             package_by_library = {
                 "transformers": (
                     "transformers",
-                    "transformers-cli",
+                    "transformers",
                     "https://github.com/huggingface/transformers/releases/tag/v{version}",
                 ),
                 "datasets": (
@@ -378,8 +394,8 @@ def install_gpu_library(
 
             package_spec, executable, url_template = package_by_library[library]
             package = package_spec.split("==", 1)[0]
-            run(f"uv venv --python {PYTHON} {q(venv)}", env=env)
-            run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env)
+            run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
+            run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env, log_file=log_file)
             code = "from importlib.metadata import version; import sys; print(version(sys.argv[1]))"
             version = run(f"{q(python)} -c {q(code)} {q(package)}", capture=True).stdout.strip()
             return (
@@ -390,18 +406,48 @@ def install_gpu_library(
             )
 
 
-def cmd_gpu_run(args: argparse.Namespace) -> None:
-    if shutil.which("uv") is None:
-        run(f"{q(sys.executable)} -m pip install --upgrade uv")
-    run(f"uv python install {PYTHON}")
-    missing = [tool for tool in ("git", "curl", "tar") if shutil.which(tool) is None]
-    if missing:
-        run("apt update")
-        run("apt install -y --no-install-recommends " + " ".join(q(tool) for tool in missing))
+def log_lines(path: Path) -> list[str]:
+    if not path.is_file():
+        return []
+    return path.read_text(encoding="utf-8", errors="replace").splitlines()
 
+
+def last_log_line(path: Path) -> str:
+    for line in reversed(log_lines(path)):
+        if line.strip():
+            return line.strip()
+    return ""
+
+
+def print_log_edges(library: str, path: Path) -> None:
+    lines = log_lines(path)
+    if not lines:
+        log(f"{library}: empty install log")
+        return
+
+    log(f"--- {library} install log: first 10 lines ---")
+    for line in lines[:10]:
+        log(f"{library}: {line}")
+    log(f"--- {library} install log: last 10 lines ---")
+    for line in lines[-10:]:
+        log(f"{library}: {line}")
+
+
+def cmd_gpu_run(args: argparse.Namespace) -> None:
     root = Path(args.root)
     root.mkdir(parents=True, exist_ok=True)
     (root / "src").mkdir(exist_ok=True)
+    logs = root / "logs"
+    logs.mkdir(exist_ok=True)
+    os.environ["UV_CACHE_DIR"] = str(root / "uv-cache")
+    Path(os.environ["UV_CACHE_DIR"]).mkdir(exist_ok=True)
+
+    if shutil.which("uv") is None:
+        run(f"{q(sys.executable)} -m pip install --upgrade uv")
+    run("apt update")
+    run("apt install -y --no-install-recommends git curl tar libxcb1 libgl1 libglib2.0-0 openmpi-bin libopenmpi-dev")
+    run(f"uv python install {PYTHON}")
+
     if args.libraries.strip() == "all":
         libraries = GPU_LIBRARIES
     else:
@@ -415,18 +461,33 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
     failures: list[dict[str, str]] = []
 
     def install(library: str) -> tuple[str, str, str, dict[str, str] | None]:
-        log(f"=== install {library} ===")
-        return install_gpu_library(library, root)
+        return install_gpu_library(library, root, logs / f"{library}.txt")
+
+    from tqdm import tqdm
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(install, library): library for library in libraries}
-        for future in as_completed(futures):
-            library = futures[future]
-            try:
-                installs[library] = future.result()
-            except Exception as exc:
-                failures.append({"library": library, "error": str(exc)})
-                log(f"{library} install failed: {exc}")
+        pending = set(futures)
+        with tqdm(total=len(futures), desc="installing", unit="lib") as progress:
+            while pending:
+                done, pending = wait(pending, timeout=5, return_when=FIRST_COMPLETED)
+                for future in done:
+                    library = futures[future]
+                    try:
+                        installs[library] = future.result()
+                        tqdm.write(f"{library}: install complete")
+                    except Exception as exc:
+                        failures.append({"library": library, "error": str(exc)})
+                        tqdm.write(f"{library}: install failed: {exc}")
+                    print_log_edges(library, logs / f"{library}.txt")
+                    progress.update(1)
+                for future in pending:
+                    library = futures[future]
+                    line = last_log_line(logs / f"{library}.txt")
+                    if line:
+                        tqdm.write(f"{library}: {line}")
+
+    log("\n" + "=" * 72 + "\nALL INSTALLATIONS COMPLETE, MOVING TO WORK\n" + "=" * 72)
 
     for library in libraries:
         if library not in installs:
