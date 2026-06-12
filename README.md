@@ -23,4 +23,4 @@ https://dashdashhelp.win
 | ollama | [15ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716) | [14ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27024369716) | [0.30.5](https://github.com/ollama/ollama/releases/tag/v0.30.5) | 2026-06-05T15:37Z |
 | tokenspeed | [601ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27348393122) | [207ms](https://github.com/netanel-haber/dash-dash-help/actions/runs/27348393122) | [0.1.0@4df7c87](https://github.com/lightseekorg/tokenspeed/commit/4df7c87969b744fc8af62a59cfdc49f4439c30eb) | 2026-06-11T12:58Z |
 
-Last updated: 2026-06-11 13:00 UTC
+Last updated: 2026-06-12 00:48 UTC
