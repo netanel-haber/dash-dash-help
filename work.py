@@ -168,46 +168,29 @@ def update_readme() -> None:
     )
 
 
-def git(cmd: str, check: bool = True) -> int:
-    log(f"$ git {cmd}")
-    return subprocess.run(f"git {cmd}", shell=True, check=check).returncode
+def git(*args: str, check: bool = True) -> int:
+    return run(["git", *args], check=check).returncode
 
 
 def git_commit_and_push(message: str) -> None:
-    git("config user.name 'github-actions[bot]'")
-    git("config user.email 'github-actions[bot]@users.noreply.github.com'")
-    git("add measurements.csv index.html README.md")
+    git("config", "user.name", "github-actions[bot]")
+    git("config", "user.email", "github-actions[bot]@users.noreply.github.com")
+    git("add", "measurements.csv", "index.html", "README.md")
 
-    if git("diff --staged --quiet", check=False) == 0:
+    if git("diff", "--staged", "--quiet", check=False) == 0:
         log("No changes to commit")
         return
 
-    git(f"commit -m '{message}'")
+    git("commit", "-m", message)
 
     for attempt in range(5):
         log(f"Push attempt {attempt + 1}/5")
-        git("pull --rebase")
+        git("pull", "--rebase")
         if git("push", check=False) == 0:
             return
         time.sleep(1 << attempt)
 
     sys.exit("All push attempts failed!")
-
-
-def bench(command: str, runs: int = 11) -> tuple[int, int]:
-    log(f"Benchmark: {command} ({runs} runs)")
-    times: list[int] = []
-    for i in range(runs):
-        start = time.perf_counter_ns()
-        subprocess.run(command, shell=True, capture_output=True)
-        ms = (time.perf_counter_ns() - start) // 1_000_000
-        times.append(ms)
-        log(f"  Run {i + 1}/{runs}: {ms}ms")
-
-    cold_ms = times[0]
-    warm_ms = sum(times[1:]) // (len(times) - 1)
-    log(f"{cold_ms=}, {warm_ms=}")
-    return cold_ms, warm_ms
 
 
 def run(
@@ -495,10 +478,6 @@ def install_gpu_library(
     )
 
 
-def cmd_gpu_list(_: argparse.Namespace) -> None:
-    print("\n".join(gpu_libraries()))
-
-
 def cmd_gpu_run(args: argparse.Namespace) -> None:
     if shutil.which("uv") is None:
         run([sys.executable, "-m", "pip", "install", "--upgrade", "uv"])
@@ -580,8 +559,6 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
         safe_library = re.sub(r"[^A-Za-z0-9_.-]+", "-", library)
         shutil.rmtree(root / "venvs" / safe_library, ignore_errors=True)
         shutil.rmtree(root / "src" / library, ignore_errors=True)
-        if library == "sglang":
-            shutil.rmtree(root / "src" / "sglang", ignore_errors=True)
         if library == "llama.cpp":
             shutil.rmtree(root / "llama-bin", ignore_errors=True)
             (root / "llama.tar.gz").unlink(missing_ok=True)
@@ -823,77 +800,14 @@ def cmd_rebuild(_: argparse.Namespace) -> None:
     update_readme()
 
 
-def cmd_bench(args: argparse.Namespace) -> None:
-    log(f"=== {args.library}: {args.command} ===")
-    if (args.cold_ms is None) != (args.warm_ms is None):
-        sys.exit("--cold-ms and --warm-ms must be passed together")
-
-    if args.cold_ms is not None and args.warm_ms is not None:
-        cold_ms, warm_ms = args.cold_ms, args.warm_ms
-        log(f"Using recorded timings: {cold_ms=}, {warm_ms=}")
-    else:
-        cold_ms, warm_ms = bench(args.command)
-
-    if args.dry_run:
-        return log("DRY RUN: Skipping update")
-
-    run_url = (
-        f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/"
-        f"{os.getenv('GITHUB_REPOSITORY')}/actions/runs/"
-        f"{os.getenv('GITHUB_RUN_ID')}"
-    )
-    measurement = Measurement(
-        library=args.library,
-        version=args.version,
-        version_url=args.version_url,
-        cold_ms=cold_ms,
-        warm_ms=warm_ms,
-        run_url=run_url,
-        last_updated=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
-    )
-
-    measurements = read_measurements()
-    idx = next(
-        (i for i, row in enumerate(measurements) if row.library == measurement.library),
-        None,
-    )
-    if idx is None:
-        measurements.append(measurement)
-    else:
-        measurements[idx] = measurement
-    log(f"{'Added' if idx is None else 'Updated'} {measurement.library}")
-    write_measurements(measurements)
-    rebuild_html()
-    update_readme()
-
-    git_commit_and_push(
-        f"{measurement.library}: {cold_ms=}/{warm_ms=} @ {measurement.version}"
-    )
-
-
 def main() -> None:
     if len(sys.argv) == 1:
         sys.exit(
-            "usage: work.py {bench,gpu-list,gpu-run,gpu-update,rebuild,"
-            "update-readme,vast-destroy,vast-metadata,vast-rent,vast-wait}"
+            "usage: work.py {gpu-run,gpu-update,rebuild,"
+            "vast-destroy,vast-metadata,vast-rent,vast-wait}"
         )
     command = sys.argv[1]
     p = argparse.ArgumentParser()
-
-    if command == "bench":
-        p.add_argument("command")
-        p.add_argument("--library", required=True)
-        p.add_argument("--version", required=True)
-        p.add_argument("--version-url", required=True)
-        p.add_argument("--cold-ms", type=int)
-        p.add_argument("--warm-ms", type=int)
-        p.add_argument("--dry-run", action="store_true")
-        cmd_bench(p.parse_args(sys.argv[2:]))
-        return
-
-    if command == "gpu-list":
-        cmd_gpu_list(p.parse_args(sys.argv[2:]))
-        return
 
     if command == "gpu-run":
         p.add_argument("--libraries", default="all")
@@ -910,10 +824,6 @@ def main() -> None:
 
     if command == "rebuild":
         cmd_rebuild(p.parse_args(sys.argv[2:]))
-        return
-
-    if command == "update-readme":
-        update_readme()
         return
 
     if command == "vast-destroy":

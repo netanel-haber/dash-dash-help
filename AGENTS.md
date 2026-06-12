@@ -63,23 +63,19 @@ Regenerate README from CSV:
 python3 work.py rebuild
 ```
 
-Local benchmark smoke test:
+Local GPU runner syntax:
 
 ```bash
-python3 work.py bench "<command>" --library <name> --version <version> --version-url <url> --dry-run
+python3 work.py gpu-run --libraries 'vllm sglang' --output /tmp/dashdashhelp-gpu-results.json --root /tmp/dashdashhelp-gpu
 ```
-
-Use `--dry-run` locally unless intentionally committing and pushing.
 
 ## Benchmark behavior
 
-- `work.py` defaults to 11 runs.
+- `work.py gpu-run` runs each benchmark 11 times.
 - Cold time is run 1.
 - Warm time is the integer average of runs 2-11.
-- `work.py bench --cold-ms --warm-ms` records externally measured timings instead of benchmarking locally.
-- `work.py bench` captures output but does not fail on a non-zero benchmark command.
+- `work.py gpu-run` fails a library if its benchmark command exits non-zero.
 - Verify suspicious `0ms` or `1ms` results; they often mean the command failed fast.
-- Commit format is currently `{library}: cold_ms={cold}/warm_ms={warm} @ {version}`.
 - `work.py` commits `measurements.csv`, `index.html`, and `README.md`.
 - `work.py` rebases before push and retries pushes.
 
