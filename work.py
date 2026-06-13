@@ -112,12 +112,12 @@ def display_hardware(hardware: str) -> str:
     return f"GPU: {hardware}"
 
 
-def html_hardware(hardware: str) -> str:
-    return escape(display_hardware(hardware)).replace("; GPU:", "<br>GPU:")
-
-
 def markdown_hardware(hardware: str) -> str:
     return display_hardware(hardware).replace("; GPU:", "<br>GPU:")
+
+
+def html_attr(value: str) -> str:
+    return escape(value, quote=True)
 
 
 def display_timestamp(timestamp: str) -> str:
@@ -136,24 +136,27 @@ def rebuild_html() -> None:
 
     thead = """<thead>
         <tr>
-          <th scope="col">library</th>
-          <th scope="col">cold</th>
-          <th scope="col">warm (10 runs)</th>
+          <th scope="col">tool</th>
+          <th scope="col" class="num">cold</th>
+          <th scope="col" class="num">warm</th>
           <th scope="col">version</th>
-          <th scope="col">hardware</th>
-          <th scope="col">measured</th>
         </tr>
       </thead>"""
 
     rows = []
     for m in measurements:
+        meta = " / ".join(
+            part
+            for part in [display_hardware(m.hardware), display_timestamp(m.last_updated)]
+            if part
+        )
         rows.append(
-            f'<tr id="{m.library}"><td><code>{m.library} --help</code></td>'
-            f'<td class="{css(m.cold_ms)}"><a href="{m.run_url}">{m.cold_ms}ms</a></td>'
-            f'<td class="{css(m.warm_ms)}"><a href="{m.run_url}">{m.warm_ms}ms</a></td>'
-            f'<td><a href="{m.version_url}">{escape(m.version)}</a></td>'
-            f"<td>{html_hardware(m.hardware)}</td>"
-            f"<td>{escape(display_timestamp(m.last_updated))}</td></tr>"
+            f'<tr id="{html_attr(m.library)}">'
+            f'<td class="tool-cell"><code>{escape(m.library)} --help</code>'
+            f'<span class="meta" title="{html_attr(meta)}">{escape(meta)}</span></td>'
+            f'<td class="num {css(m.cold_ms)}"><a href="{html_attr(m.run_url)}">{m.cold_ms}ms</a></td>'
+            f'<td class="num {css(m.warm_ms)}"><a href="{html_attr(m.run_url)}">{m.warm_ms}ms</a></td>'
+            f'<td class="version"><a href="{html_attr(m.version_url)}">{escape(m.version)}</a></td></tr>'
         )
     html = re.sub(
         r"<thead>.*?</thead>",
