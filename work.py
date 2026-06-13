@@ -370,7 +370,7 @@ def install_gpu_library(
                 ),
                 "llm": ("llm", "llm", "https://github.com/simonw/llm/releases/tag/{version}"),
                 "openai": (
-                    "openai",
+                    "openai==2.34.0",
                     "openai",
                     "https://github.com/openai/openai-python/releases/tag/v{version}",
                 ),
@@ -446,7 +446,9 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
     if shutil.which("uv") is None:
         run(f"{q(sys.executable)} -m pip install --upgrade uv")
     run("apt update")
-    run("apt install -y --no-install-recommends git curl tar libxcb1 libgl1 libglib2.0-0 openmpi-bin libopenmpi-dev")
+    run(
+        "apt install -y --no-install-recommends git curl tar zstd libxcb1 libgl1 libglib2.0-0 openmpi-bin libopenmpi-dev"
+    )
     run(f"uv python install {PYTHON}")
 
     if args.libraries.strip() == "all":
