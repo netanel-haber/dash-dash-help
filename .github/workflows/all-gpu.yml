@@ -38,14 +38,16 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           vastai --version
 
-      - name: Create SSH key
+      - name: Write SSH key
         id: ssh_key
+        env:
+          VAST_SSH_PRIVATE_KEY: ${{ secrets.VAST_SSH_PRIVATE_KEY }}
         run: |
+          test -n "$VAST_SSH_PRIVATE_KEY"
           key="$RUNNER_TEMP/vast_key"
-          ssh-keygen -t ed25519 -f "$key" -N "" -C "dash-dash-help-${GITHUB_RUN_ID}"
+          printf '%s\n' "$VAST_SSH_PRIVATE_KEY" > "$key"
           chmod 600 "$key"
           echo "private=$key" >> "$GITHUB_OUTPUT"
-          echo "public=$key.pub" >> "$GITHUB_OUTPUT"
 
       - name: Rent Vast instance
         id: rent
@@ -55,8 +57,7 @@ jobs:
             --max-price "${{ inputs.max_price }}" \
             --disk-gb "$VAST_DISK_GB" \
             --image "$VAST_IMAGE" \
-            --label "dash-dash-help-gpu-${GITHUB_RUN_ID}" \
-            --ssh-public-key "${{ steps.ssh_key.outputs.public }}"
+            --label "dash-dash-help-gpu-${GITHUB_RUN_ID}"
 
       - name: Wait for SSH
         id: ssh

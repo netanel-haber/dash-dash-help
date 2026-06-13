@@ -594,12 +594,6 @@ def cmd_vast_rent(args: argparse.Namespace) -> None:
         if not instance_id:
             continue
 
-        proc = run(f"vastai attach ssh {q(instance_id)} {q(args.ssh_public_key)}", capture=True)
-        if proc.stdout.strip():
-            print(proc.stdout.strip())
-        if proc.stderr.strip():
-            print(proc.stderr.strip(), file=sys.stderr)
-
         github_output = os.environ.get("GITHUB_OUTPUT")
         if github_output:
             with Path(github_output).open("a", encoding="utf-8") as f:
@@ -733,7 +727,6 @@ def main() -> None:
         p.add_argument("--disk-gb", required=True)
         p.add_argument("--image", required=True)
         p.add_argument("--label", required=True)
-        p.add_argument("--ssh-public-key", required=True)
         p.add_argument("--limit", type=int, default=20)
         cmd_vast_rent(p.parse_args(sys.argv[2:]))
         return
