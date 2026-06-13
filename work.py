@@ -653,6 +653,8 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
             return
         time.sleep(10)
 
+    run(f"vastai execute {q(args.instance_id)} {q('ls -l /root/.ssh /root/.ssh/authorized_keys')}", check=False)
+    run(f"vastai logs {q(args.instance_id)} --tail 120 --daemon-logs", check=False)
     sys.exit("SSH never became ready")
 
 
