@@ -128,6 +128,37 @@ def display_timestamp(timestamp: str) -> str:
     return f"{dt:%b} {dt.day}, {dt:%Y %H:%M UTC}"
 
 
+def run_meta_html(measurements: list[Measurement]) -> str:
+    groups = []
+    seen = set()
+    for m in measurements:
+        key = (display_hardware(m.hardware), display_timestamp(m.last_updated), m.run_url)
+        if key in seen:
+            continue
+        seen.add(key)
+        groups.append(key)
+
+    if not groups:
+        return ""
+
+    if len(groups) == 1:
+        hardware, measured, run_url = groups[0]
+        text = " / ".join(part for part in [measured, hardware] if part)
+        return (
+            f'<p class="run-meta" id="run-meta">'
+            f'<a href="{html_attr(run_url)}">Run: {escape(text)}</a></p>'
+        )
+
+    title = "; ".join(
+        " / ".join(part for part in [measured, hardware] if part)
+        for hardware, measured, _ in groups
+    )
+    return (
+        f'<p class="run-meta" id="run-meta" title="{html_attr(title)}">'
+        f"{len(groups)} measurement groups</p>"
+    )
+
+
 def rebuild_html() -> None:
     measurements = sorted(read_measurements(), key=lambda m: int(m.warm_ms), reverse=True)
 
@@ -145,15 +176,9 @@ def rebuild_html() -> None:
 
     rows = []
     for m in measurements:
-        meta = " / ".join(
-            part
-            for part in [display_hardware(m.hardware), display_timestamp(m.last_updated)]
-            if part
-        )
         rows.append(
             f'<tr id="{html_attr(m.library)}">'
-            f'<td class="tool-cell"><code>{escape(m.library)} --help</code>'
-            f'<span class="meta" title="{html_attr(meta)}">{escape(meta)}</span></td>'
+            f'<td class="tool-cell"><code>{escape(m.library)} --help</code></td>'
             f'<td class="num {css(m.cold_ms)}"><a href="{html_attr(m.run_url)}">{m.cold_ms}ms</a></td>'
             f'<td class="num {css(m.warm_ms)}"><a href="{html_attr(m.run_url)}">{m.warm_ms}ms</a></td>'
             f'<td class="version"><a href="{html_attr(m.version_url)}">{escape(m.version)}</a></td></tr>'
@@ -170,6 +195,12 @@ def rebuild_html() -> None:
         rf"\1\n    {rows_html}\n    \2",
         html,
         flags=re.DOTALL,
+    )
+    html = re.sub(r"\n\s*<p class=\"run-meta\" id=\"run-meta\".*?</p>", "", html, flags=re.DOTALL)
+    html = html.replace(
+        '\n  <div class="table-wrap">',
+        f"\n  {run_meta_html(measurements)}\n\n  <div class=\"table-wrap\">",
+        1,
     )
     INDEX_HTML.write_text(html)
     log(f"Rebuilt HTML with {len(measurements)} rows")
@@ -278,11 +309,9 @@ def install_gpu_library(
                 env=install_env,
                 log_file=log_file,
             )
-            code = "from importlib.metadata import version; print(version('vllm'))"
-            version = run(f"{q(python)} -c {q(code)}", capture=True).stdout.strip()
             return (
                 f"{q(venv / 'bin' / 'vllm')} --help",
-                version,
+                tag.removeprefix("v"),
                 f"https://github.com/vllm-project/vllm/releases/tag/{tag}",
                 None,
             )
