@@ -623,13 +623,22 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
     if not host or not port:
         sys.exit("Vast instance is missing direct SSH target")
 
+    ssh_command = (
+        f"ssh -i {q(args.ssh_private_key)} -p {q(port)} -o IdentitiesOnly=yes "
+        "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
+        f"-o ConnectTimeout=10 {q(f'root@{host}')} echo ok"
+    )
+    printed_verbose_ssh = False
+
     for _ in range(args.ssh_attempts):
-        proc = run(
-            f"ssh -i {q(args.ssh_private_key)} -p {q(port)} -o IdentitiesOnly=yes "
-            "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
-            f"-o ConnectTimeout=10 {q(f'root@{host}')} echo ok",
-            check=False,
-        )
+        proc = run(ssh_command, capture=True, check=False)
+        if proc.stdout:
+            print(proc.stdout, end="")
+        if proc.stderr:
+            print(proc.stderr, end="", file=sys.stderr)
+        if proc.returncode != 0 and not printed_verbose_ssh and "Connection refused" not in proc.stderr:
+            printed_verbose_ssh = True
+            run(ssh_command.replace("ssh ", "ssh -vv ", 1), check=False)
         if proc.returncode == 0:
             github_output = os.environ.get("GITHUB_OUTPUT")
             if github_output:
