@@ -615,8 +615,10 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
     for _ in range(args.status_attempts):
         info = json.loads(run(f"vastai --raw show instance {q(args.instance_id)}", capture=True).stdout)
         print(json.dumps(info, indent=2))
-        host = str(info.get("ssh_host") or "")
-        port = str(info.get("ssh_port") or "")
+        host = str(info.get("public_ipaddr") or "")
+        ports = info.get("ports") or {}
+        port_22 = ports.get("22/tcp") if isinstance(ports, dict) else None
+        port = str(port_22[0].get("HostPort") if port_22 else "")
         if info.get("actual_status") == "running" and info.get("intended_status") == "running" and host and port:
             break
         time.sleep(10)
@@ -632,7 +634,6 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
         "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
         f"-o ConnectTimeout=10 {q(f'root@{host}')} echo ok"
     )
-    printed_verbose_ssh = False
 
     for _ in range(args.ssh_attempts):
         proc = run(ssh_command, capture=True, check=False)
@@ -640,9 +641,6 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
             print(proc.stdout, end="")
         if proc.stderr:
             print(proc.stderr, end="", file=sys.stderr)
-        if proc.returncode != 0 and not printed_verbose_ssh and "Connection refused" not in proc.stderr:
-            printed_verbose_ssh = True
-            run(ssh_command.replace("ssh ", "ssh -vv ", 1), check=False)
         if proc.returncode == 0:
             github_output = os.environ.get("GITHUB_OUTPUT")
             if github_output:
