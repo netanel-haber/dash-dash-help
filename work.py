@@ -396,7 +396,7 @@ def install_gpu_library(
             package_spec, executable, url_template = package_by_library[library]
             package = package_spec.split()[0].split("==", 1)[0]
             run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
-            run(f"uv pip install --python {q(python)} {q(package_spec)}", env=env, log_file=log_file)
+            run(f"uv pip install --python {q(python)} {package_spec}", env=env, log_file=log_file)
             code = "from importlib.metadata import version; import sys; print(version(sys.argv[1]))"
             version = run(f"{q(python)} -c {q(code)} {q(package)}", capture=True).stdout.strip()
             return (
