@@ -540,13 +540,6 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
 
 
 def cmd_vast_rent(args: argparse.Namespace) -> None:
-    public_key = Path(args.ssh_public_key).read_text(encoding="utf-8").strip()
-    proc = run(f"vastai create ssh-key {q(public_key)} -y", capture=True)
-    if proc.stdout.strip():
-        print(proc.stdout.strip())
-    if proc.stderr.strip():
-        print(proc.stderr.strip(), file=sys.stderr)
-
     query = f"{args.query} dph_total<={args.max_price}"
     offers = json.loads(
         run(
@@ -600,6 +593,12 @@ def cmd_vast_rent(args: argparse.Namespace) -> None:
         instance_id = str(payload.get("new_contract") or "")
         if not instance_id:
             continue
+
+        proc = run(f"vastai attach ssh {q(instance_id)} {q(args.ssh_public_key)}", capture=True)
+        if proc.stdout.strip():
+            print(proc.stdout.strip())
+        if proc.stderr.strip():
+            print(proc.stderr.strip(), file=sys.stderr)
 
         github_output = os.environ.get("GITHUB_OUTPUT")
         if github_output:
