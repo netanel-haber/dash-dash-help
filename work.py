@@ -456,8 +456,6 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
         unknown = sorted(set(libraries) - set(GPU_LIBRARIES))
         if unknown:
             sys.exit(f"Unknown GPU libraries: {', '.join(unknown)}")
-    workers = max(1, min(len(libraries), os.cpu_count() or 1))
-    installs: dict[str, tuple[str, str, str, dict[str, str] | None]] = {}
     results: list[dict[str, Any]] = []
     failures: list[dict[str, str]] = []
 
@@ -466,74 +464,80 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
 
     from tqdm import tqdm
 
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {pool.submit(install, library): library for library in libraries}
-        pending = set(futures)
-        with tqdm(total=len(futures), desc="installing", unit="lib") as progress:
-            while pending:
-                done, pending = wait(pending, timeout=5, return_when=FIRST_COMPLETED)
-                for future in done:
-                    library = futures[future]
-                    try:
-                        installs[library] = future.result()
-                        tqdm.write(f"{library}: install complete")
-                    except Exception as exc:
-                        failures.append({"library": library, "error": str(exc)})
-                        tqdm.write(f"{library}: install failed: {exc}")
-                    print_log_edges(library, logs / f"{library}.txt")
-                    progress.update(1)
-                for future in pending:
-                    library = futures[future]
-                    line = last_log_line(logs / f"{library}.txt")
-                    if line:
-                        tqdm.write(f"{library}: {line}")
+    for batch_start in range(0, len(libraries), 3):
+        batch = libraries[batch_start : batch_start + 3]
+        installs: dict[str, tuple[str, str, str, dict[str, str] | None]] = {}
+        log(f"=== install batch: {', '.join(batch)} ===")
 
-    log("\n" + "=" * 72 + "\nALL INSTALLATIONS COMPLETE, MOVING TO WORK\n" + "=" * 72)
+        with ThreadPoolExecutor(max_workers=len(batch)) as pool:
+            futures = {pool.submit(install, library): library for library in batch}
+            pending = set(futures)
+            with tqdm(total=len(futures), desc="installing", unit="lib") as progress:
+                while pending:
+                    done, pending = wait(pending, timeout=5, return_when=FIRST_COMPLETED)
+                    for future in done:
+                        library = futures[future]
+                        try:
+                            installs[library] = future.result()
+                            tqdm.write(f"{library}: install complete")
+                        except Exception as exc:
+                            failures.append({"library": library, "error": str(exc)})
+                            tqdm.write(f"{library}: install failed: {exc}")
+                        print_log_edges(library, logs / f"{library}.txt")
+                        progress.update(1)
+                    for future in pending:
+                        library = futures[future]
+                        line = last_log_line(logs / f"{library}.txt")
+                        if line:
+                            tqdm.write(f"{library}: {line}")
 
-    for library in libraries:
-        if library not in installs:
-            continue
-        command, version, version_url, command_env = installs[library]
-        try:
-            log(f"=== benchmark {library} ===")
-            times: list[int] = []
-            for i in range(11):
-                start = time.perf_counter_ns()
-                proc = run(
-                    command,
-                    capture=True,
-                    env=command_env,
-                    check=False,
+        log("\n" + "=" * 72 + "\nBATCH INSTALLATIONS COMPLETE, MOVING TO WORK\n" + "=" * 72)
+
+        for library in batch:
+            if library not in installs:
+                continue
+            command, version, version_url, command_env = installs[library]
+            try:
+                log(f"=== benchmark {library} ===")
+                times: list[int] = []
+                for i in range(11):
+                    start = time.perf_counter_ns()
+                    proc = run(
+                        command,
+                        capture=True,
+                        env=command_env,
+                        check=False,
+                    )
+                    elapsed_ms = (time.perf_counter_ns() - start) // 1_000_000
+                    if proc.returncode != 0:
+                        print(proc.stdout, file=sys.stderr)
+                        print(proc.stderr, file=sys.stderr)
+                        raise subprocess.CalledProcessError(proc.returncode, command)
+                    times.append(elapsed_ms)
+                    log(f"  Run {i + 1}/11: {elapsed_ms}ms")
+
+                results.append(
+                    {
+                        "library": library,
+                        "version": version,
+                        "version_url": version_url,
+                        "cold_ms": times[0],
+                        "warm_ms": sum(times[1:]) // 10,
+                        "times": times,
+                    }
                 )
-                elapsed_ms = (time.perf_counter_ns() - start) // 1_000_000
-                if proc.returncode != 0:
-                    print(proc.stdout, file=sys.stderr)
-                    print(proc.stderr, file=sys.stderr)
-                    raise subprocess.CalledProcessError(proc.returncode, command)
-                times.append(elapsed_ms)
-                log(f"  Run {i + 1}/11: {elapsed_ms}ms")
+            except Exception as exc:
+                failures.append({"library": library, "error": str(exc)})
+                log(f"{library} failed: {exc}")
 
-            results.append(
-                {
-                    "library": library,
-                    "version": version,
-                    "version_url": version_url,
-                    "cold_ms": times[0],
-                    "warm_ms": sum(times[1:]) // 10,
-                    "times": times,
-                }
-            )
-        except Exception as exc:
-            failures.append({"library": library, "error": str(exc)})
-            log(f"{library} failed: {exc}")
-
-    for library in libraries:
-        safe_library = re.sub(r"[^A-Za-z0-9_.-]+", "-", library)
-        shutil.rmtree(root / "venvs" / safe_library, ignore_errors=True)
-        shutil.rmtree(root / "src" / library, ignore_errors=True)
-        if library == "llama.cpp":
-            shutil.rmtree(root / "llama-bin", ignore_errors=True)
-            (root / "llama.tar.gz").unlink(missing_ok=True)
+        for library in batch:
+            safe_library = re.sub(r"[^A-Za-z0-9_.-]+", "-", library)
+            shutil.rmtree(root / "venvs" / safe_library, ignore_errors=True)
+            shutil.rmtree(root / "src" / library, ignore_errors=True)
+            if library == "llama.cpp":
+                shutil.rmtree(root / "llama-bin", ignore_errors=True)
+                (root / "llama.tar.gz").unlink(missing_ok=True)
+        run("uv cache prune --ci", check=False)
 
     Path(args.output).write_text(json.dumps({"results": results, "failures": failures}, indent=2))
     log(f"Wrote GPU results to {args.output}")

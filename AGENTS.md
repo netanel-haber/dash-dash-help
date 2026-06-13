@@ -74,6 +74,7 @@ python3 work.py gpu-run --libraries 'vllm sglang' --output /tmp/dashdashhelp-gpu
 - `work.py gpu-run` runs each benchmark 11 times.
 - Cold time is run 1.
 - Warm time is the integer average of runs 2-11.
+- GPU libraries install in batches of 3, benchmark immediately, then delete their venv/source before the next batch.
 - `work.py gpu-run` fails a library if its benchmark command exits non-zero.
 - Verify suspicious `0ms` or `1ms` results; they often mean the command failed fast.
 - `work.py` commits `measurements.csv`, `index.html`, and `README.md`.
