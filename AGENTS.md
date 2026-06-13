@@ -89,7 +89,7 @@ python3 work.py gpu-run --libraries 'vllm sglang' --output /tmp/dashdashhelp-gpu
 - Vast price filtering must use `dph_total`, so disk cost is included in the max price.
 - Vast SSH uses one pre-created keypair. The private key lives in the `VAST_SSH_PRIVATE_KEY` GitHub secret.
 - `all-gpu.yml` derives the public key from that secret and passes it to `work.py vast-rent`.
-- `work.py vast-rent` injects that public key into `~/.ssh/authorized_keys` with `--onstart-cmd`.
+- `work.py vast-rent` injects that public key into `/root/.ssh/authorized_keys` with `--onstart-cmd`, then fixes ownership and mode.
 - Do not create or attach Vast SSH keys per run.
 - Current GPU image is CUDA 13 because latest TensorRT-LLM needs CUDA 13 runtime libraries.
 - `libraries` defaults to `all`.

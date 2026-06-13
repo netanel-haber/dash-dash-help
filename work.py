@@ -548,11 +548,12 @@ def cmd_vast_rent(args: argparse.Namespace) -> None:
     if not ssh_public_key:
         sys.exit("SSH public key is empty")
     onstart = (
-        "mkdir -p ~/.ssh; "
-        "chmod 700 ~/.ssh; "
-        'echo "" >> ~/.ssh/authorized_keys; '
-        f"echo {q(ssh_public_key)} >> ~/.ssh/authorized_keys; "
-        "chmod 600 ~/.ssh/authorized_keys"
+        "mkdir -p /root/.ssh; "
+        "touch /root/.ssh/authorized_keys; "
+        f"printf '\\n%s\\n' {q(ssh_public_key)} >> /root/.ssh/authorized_keys; "
+        "chown -R root:root /root/.ssh; "
+        "chmod 700 /root/.ssh; "
+        "chmod 600 /root/.ssh/authorized_keys"
     )
     query = f"{args.query} dph_total<={args.max_price}"
     offers = json.loads(
