@@ -16,7 +16,7 @@ env:
   VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
   VAST_DISK_GB: "100"
   VAST_IMAGE: nvidia/cuda:13.0.3-cudnn-devel-ubuntu24.04
-  VAST_QUERY: gpu_name=RTX_3060 gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=13.0 reliability>0.90 inet_down>=500 inet_down_cost<=0.004 direct_port_count>=1 rented=false verified=true
+  VAST_QUERY: gpu_name=RTX_3060 gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=13.0 reliability>0.99 inet_down>=500 inet_down_cost<=0.004 direct_port_count>=1 disk_bw>=500 rented=false verified=true vms_enabled=false
 
 jobs:
   bench:
@@ -47,7 +47,9 @@ jobs:
           key="$RUNNER_TEMP/vast_key"
           printf '%s\n' "$VAST_SSH_PRIVATE_KEY" > "$key"
           chmod 600 "$key"
+          ssh-keygen -y -f "$key" > "$key.pub"
           echo "private=$key" >> "$GITHUB_OUTPUT"
+          echo "public=$key.pub" >> "$GITHUB_OUTPUT"
 
       - name: Rent Vast instance
         id: rent
@@ -57,7 +59,8 @@ jobs:
             --max-price "${{ inputs.max_price }}" \
             --disk-gb "$VAST_DISK_GB" \
             --image "$VAST_IMAGE" \
-            --label "dash-dash-help-gpu-${GITHUB_RUN_ID}"
+            --label "dash-dash-help-gpu-${GITHUB_RUN_ID}" \
+            --ssh-public-key "${{ steps.ssh_key.outputs.public }}"
 
       - name: Wait for SSH
         id: ssh

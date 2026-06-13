@@ -544,6 +544,16 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
 
 
 def cmd_vast_rent(args: argparse.Namespace) -> None:
+    ssh_public_key = Path(args.ssh_public_key).expanduser().read_text().strip()
+    if not ssh_public_key:
+        sys.exit("SSH public key is empty")
+    onstart = (
+        "mkdir -p ~/.ssh; "
+        "chmod 700 ~/.ssh; "
+        'echo "" >> ~/.ssh/authorized_keys; '
+        f"echo {q(ssh_public_key)} >> ~/.ssh/authorized_keys; "
+        "chmod 600 ~/.ssh/authorized_keys"
+    )
     query = f"{args.query} dph_total<={args.max_price}"
     offers = json.loads(
         run(
@@ -576,7 +586,8 @@ def cmd_vast_rent(args: argparse.Namespace) -> None:
         log(f"Trying on-demand offer {offer_id}: {offer.get('gpu_name', 'unknown GPU')}, price={price}")
         proc = run(
             f"vastai --raw create instance {q(offer_id)} --image {q(args.image)} "
-            f"--disk {q(args.disk_gb)} --ssh --direct --cancel-unavail --label {q(args.label)}",
+            f"--disk {q(args.disk_gb)} --ssh --direct --cancel-unavail --label {q(args.label)} "
+            f"--onstart-cmd {q(onstart)}",
             capture=True,
             check=False,
         )
@@ -653,8 +664,6 @@ def cmd_vast_wait(args: argparse.Namespace) -> None:
             return
         time.sleep(10)
 
-    run(f"vastai execute {q(args.instance_id)} {q('ls -l /root/.ssh /root/.ssh/authorized_keys')}", check=False)
-    run(f"vastai logs {q(args.instance_id)} --tail 120 --daemon-logs", check=False)
     sys.exit("SSH never became ready")
 
 
@@ -740,6 +749,7 @@ def main() -> None:
         p.add_argument("--disk-gb", required=True)
         p.add_argument("--image", required=True)
         p.add_argument("--label", required=True)
+        p.add_argument("--ssh-public-key", required=True)
         p.add_argument("--limit", type=int, default=20)
         cmd_vast_rent(p.parse_args(sys.argv[2:]))
         return
