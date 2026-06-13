@@ -136,6 +136,7 @@ gh workflow run all-gpu.yml --ref main -f libraries='vllm sglang'
 - `VLMEvalKit`: clone latest release tag and install from source with `uv pip install -e .`.
 - `tensorrt-llm`: free disk space first; install `tensorrt-llm`, `click`, and `pynvml`; benchmark `trtllm-serve --help`, not `trtllm --help`.
 - `sglang`: install latest PyPI package.
+- `transformers`: install latest `transformers[serving]` plus `requests`; benchmark the official `transformers --help` entrypoint.
 
 ## YAML gotchas
 

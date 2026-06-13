@@ -359,7 +359,7 @@ def install_gpu_library(
         case _:
             package_by_library = {
                 "transformers": (
-                    "transformers requests",
+                    "transformers[serving] requests",
                     "transformers",
                     "https://github.com/huggingface/transformers/releases/tag/v{version}",
                 ),
@@ -394,7 +394,7 @@ def install_gpu_library(
                 raise KeyError(f"Unknown GPU library: {library}")
 
             package_spec, executable, url_template = package_by_library[library]
-            package = package_spec.split()[0].split("==", 1)[0]
+            package = package_spec.split()[0].split("[", 1)[0].split("==", 1)[0]
             run(f"uv venv --python {PYTHON} {q(venv)}", env=env, log_file=log_file)
             run(f"uv pip install --python {q(python)} {package_spec}", env=env, log_file=log_file)
             code = "from importlib.metadata import version; import sys; print(version(sys.argv[1]))"
