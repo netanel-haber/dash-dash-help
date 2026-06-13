@@ -17,14 +17,12 @@ from html import escape
 from pathlib import Path
 from shlex import quote as shell_quote, split as shell_split
 from typing import Any
-from urllib.parse import quote as url_quote
 from urllib.request import urlopen, urlretrieve
 
 ROOT = Path(__file__).parent
 INDEX_HTML = ROOT / "index.html"
 MEASUREMENTS_CSV = ROOT / "measurements.csv"
 README = ROOT / "README.md"
-VAST_HARDWARE_URL = "https://cloud.vast.ai/create/?q="
 PYTHON = "3.12"
 CSV_FIELDS = [
     "library",
@@ -105,6 +103,31 @@ def write_measurements(measurements: list[Measurement]) -> None:
     log(f"Wrote {len(measurements)} measurements")
 
 
+def display_hardware(hardware: str) -> str:
+    hardware = hardware.strip()
+    if not hardware:
+        return ""
+    if hardware.startswith("CPU:"):
+        return hardware
+    return f"GPU: {hardware}"
+
+
+def html_hardware(hardware: str) -> str:
+    return escape(display_hardware(hardware)).replace("; GPU:", "<br>GPU:")
+
+
+def markdown_hardware(hardware: str) -> str:
+    return display_hardware(hardware).replace("; GPU:", "<br>GPU:")
+
+
+def display_timestamp(timestamp: str) -> str:
+    try:
+        dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return timestamp
+    return f"{dt:%b} {dt.day}, {dt:%Y %H:%M UTC}"
+
+
 def rebuild_html() -> None:
     measurements = sorted(read_measurements(), key=lambda m: int(m.warm_ms), reverse=True)
 
@@ -118,22 +141,19 @@ def rebuild_html() -> None:
           <th scope="col">warm (10 runs)</th>
           <th scope="col">version</th>
           <th scope="col">hardware</th>
-          <th scope="col">measured on</th>
+          <th scope="col">measured</th>
         </tr>
       </thead>"""
 
     rows = []
     for m in measurements:
-        hardware = escape(m.hardware) if m.hardware else ""
-        if hardware and m.hardware_url:
-            hardware = f'<a href="{escape(m.hardware_url)}">{hardware}</a>'
         rows.append(
             f'<tr id="{m.library}"><td><code>{m.library} --help</code></td>'
             f'<td class="{css(m.cold_ms)}"><a href="{m.run_url}">{m.cold_ms}ms</a></td>'
             f'<td class="{css(m.warm_ms)}"><a href="{m.run_url}">{m.warm_ms}ms</a></td>'
             f'<td><a href="{m.version_url}">{escape(m.version)}</a></td>'
-            f"<td>{hardware}</td>"
-            f"<td>{escape(m.last_updated)}</td></tr>"
+            f"<td>{html_hardware(m.hardware)}</td>"
+            f"<td>{escape(display_timestamp(m.last_updated))}</td></tr>"
         )
     html = re.sub(
         r"<thead>.*?</thead>",
@@ -154,18 +174,17 @@ def rebuild_html() -> None:
 
 def update_readme() -> None:
     rows = [
-        "| library | cold | warm (10 runs) | version | hardware | measured on |",
+        "| library | cold | warm (10 runs) | version | hardware | measured |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
     for m in sorted(read_measurements(), key=lambda row: int(row.warm_ms), reverse=True):
-        hardware = f"[{m.hardware}]({m.hardware_url})" if m.hardware and m.hardware_url else m.hardware
         rows.append(
             f"| {m.library} "
             f"| [{m.cold_ms}ms]({m.run_url}) "
             f"| [{m.warm_ms}ms]({m.run_url}) "
             f"| [{m.version}]({m.version_url}) "
-            f"| {hardware} "
-            f"| {m.last_updated} |"
+            f"| {markdown_hardware(m.hardware)} "
+            f"| {display_timestamp(m.last_updated)} |"
         )
 
     readme = README.read_text()
@@ -539,7 +558,7 @@ def cmd_gpu_run(args: argparse.Namespace) -> None:
             if library == "llama.cpp":
                 shutil.rmtree(root / "llama-bin", ignore_errors=True)
                 (root / "llama.tar.gz").unlink(missing_ok=True)
-        run("uv cache prune --ci", check=False)
+        run("uv cache prune --ci --force", check=False)
 
     Path(args.output).write_text(json.dumps({"results": results, "failures": failures}, indent=2))
     log(f"Wrote GPU results to {args.output}")
@@ -675,8 +694,8 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
     info = json.loads(run(f"vastai --raw show instance {q(args.instance_id)}", capture=True).stdout)
     gpu_count = int(info.get("num_gpus") or info.get("gpu_count") or 1)
     gpu_name = str(info.get("gpu_name") or "unknown GPU")
-    hardware = f"{gpu_count}x {gpu_name}"
-    hardware_url = f"{VAST_HARDWARE_URL}{url_quote(f'gpu_name={gpu_name}')}"
+    cpu_name = " ".join(str(info.get("cpu_name") or "unknown CPU").split())
+    hardware = f"CPU: {cpu_name}; GPU: {gpu_count}x {gpu_name}"
     measurements = read_measurements()
     run_url = (
         f"{os.getenv('GITHUB_SERVER_URL', 'https://github.com')}/"
@@ -694,7 +713,6 @@ def cmd_gpu_update(args: argparse.Namespace) -> None:
             run_url=run_url,
             last_updated=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
             hardware=hardware,
-            hardware_url=hardware_url,
         )
         idx = next(
             (i for i, row in enumerate(measurements) if row.library == measurement.library),
