@@ -84,9 +84,9 @@ python3 work.py gpu-run --libraries 'vllm sglang' --output /tmp/dashdashhelp-gpu
 
 - `all-gpu.yml` is the benchmark workflow.
 - Benchmark workflow runs are manual only: `workflow_dispatch`.
-- `all-gpu.yml` rents one cheapest matching on-demand Vast RTX 3060 GPU, uses direct SSH, runs selected libraries on that instance, updates the table, then destroys it.
-- Vast GPU rentals require RTX 3060, non-VM-capable hosts (`vms_enabled=false`), reliability above `0.99`, disk bandwidth at least `500 MB/s`, at least `500 Mbps` download, and download bandwidth cost at most `$4/TB`.
-- Vast price filtering must use `dph_total`, so disk cost is included in the max price.
+- `all-gpu.yml` rents one cheapest matching on-demand Vast RTX 5060 Ti GPU, uses direct SSH, runs selected libraries on that instance, updates the table, then destroys it.
+- Vast GPU rentals require RTX 5060 Ti, non-VM-capable hosts (`vms_enabled=false`), reliability above `0.99`, disk bandwidth at least `500 MB/s`, at least `500 Mbps` download, and download bandwidth cost at most `$4/TB`.
+- Vast price filtering must use `dph_total`, so the `$0.25/hr` cap includes disk cost.
 - Vast SSH uses one pre-created keypair. The private key lives in the `VAST_SSH_PRIVATE_KEY` GitHub secret.
 - `all-gpu.yml` derives the public key from that secret and passes it to `work.py vast-rent`.
 - `work.py vast-rent` injects that public key into `/root/.ssh/authorized_keys` with `--onstart-cmd`, then fixes ownership and mode.

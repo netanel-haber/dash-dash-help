@@ -10,13 +10,13 @@ on:
       max_price:
         description: "Max GPU price $/hour"
         required: true
-        default: "0.10"
+        default: "0.25"
 
 env:
   VAST_API_KEY: ${{ secrets.VAST_API_KEY }}
   VAST_DISK_GB: "100"
   VAST_IMAGE: nvidia/cuda:13.0.3-cudnn-devel-ubuntu24.04
-  VAST_QUERY: gpu_name=RTX_3060 gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=13.0 reliability>0.99 inet_down>=500 inet_down_cost<=0.004 direct_port_count>=1 disk_bw>=500 rented=false verified=true vms_enabled=false
+  VAST_QUERY: gpu_name=RTX_5060_Ti gpu_arch=nvidia num_gpus=1 compute_cap>=750 gpu_ram>=8 cuda_vers>=13.0 reliability>0.99 inet_down>=500 inet_down_cost<=0.004 direct_port_count>=1 disk_bw>=500 rented=false verified=true vms_enabled=false
 
 jobs:
   bench:
