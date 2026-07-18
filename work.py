@@ -17,6 +17,7 @@ from html import escape
 from pathlib import Path
 from shlex import quote as shell_quote, split as shell_split
 from typing import Any
+from urllib.parse import quote as url_quote
 from urllib.request import urlopen, urlretrieve
 
 ROOT = Path(__file__).parent
@@ -168,25 +169,52 @@ def rebuild_html() -> None:
     thead = """<thead>
         <tr>
           <th scope="col">tool</th>
-          <th scope="col" class="num">cold</th>
-          <th scope="col" class="num">warm</th>
+          <th scope="col" class="time-cell">
+            <span class="time-pair">
+              <span class="time-chip cold-time" title="First run">cold</span>
+              <span class="time-chip warm-time" title="Average of runs 2–11">warm</span>
+            </span>
+          </th>
           <th scope="col">version</th>
         </tr>
       </thead>"""
 
     rows = []
     for m in measurements:
+        fragment = html_attr(url_quote(m.library, safe=""))
         rows.append(
-            f'<tr id="{html_attr(m.library)}">'
-            f'<td class="tool-cell"><code>{escape(m.library)} --help</code></td>'
-            f'<td class="num {css(m.cold_ms)}"><a href="{html_attr(m.run_url)}">{m.cold_ms}ms</a></td>'
-            f'<td class="num {css(m.warm_ms)}"><a href="{html_attr(m.run_url)}">{m.warm_ms}ms</a></td>'
+            f'<tr id="{html_attr(m.library)}" tabindex="-1">'
+            f'<td class="tool-cell"><code><a class="tool-link" href="#{fragment}" '
+            f'aria-label="{html_attr(m.library)} --help — focus this library">'
+            f'{escape(m.library)} --help</a></code></td>'
+            f'<td class="time-cell"><span class="time-pair">'
+            f'<a class="time-chip time-value cold-time {css(m.cold_ms)}" '
+            f'href="{html_attr(m.run_url)}" aria-label="Cold: {m.cold_ms} milliseconds">{m.cold_ms}ms</a>'
+            f'<a class="time-chip time-value warm-time {css(m.warm_ms)}" '
+            f'href="{html_attr(m.run_url)}" aria-label="Warm: {m.warm_ms} milliseconds">{m.warm_ms}ms</a>'
+            f'</span></td>'
             f'<td class="version"><a href="{html_attr(m.version_url)}">{escape(m.version)}</a></td></tr>'
         )
+
+    tool_width_ch = max(
+        (len(f"{m.library} --help") for m in measurements),
+        default=0,
+    ) + 3
+    colgroup = f"""<colgroup>
+        <col class="tool-col" style="--tool-width: {tool_width_ch}ch">
+        <col class="time-col">
+        <col>
+      </colgroup>"""
+    html = re.sub(
+        r"<colgroup>.*?</colgroup>",
+        colgroup,
+        INDEX_HTML.read_text(),
+        flags=re.DOTALL,
+    )
     html = re.sub(
         r"<thead>.*?</thead>",
         thead,
-        INDEX_HTML.read_text(),
+        html,
         flags=re.DOTALL,
     )
     rows_html = "\n    ".join(rows)
